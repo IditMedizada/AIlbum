@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "808160337385",
+    "project_id": "ailbum",
+    "storage_bucket": "ailbum.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:808160337385:android:e70696af88ed4f49d97f78",
+        "android_client_info": {
+          "package_name": "com.example.my_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDScbtMFwbxn1YRyZ7ataScHNm6vXJCuHQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
