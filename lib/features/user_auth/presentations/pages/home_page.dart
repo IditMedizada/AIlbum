@@ -17,38 +17,51 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<AssetEntity> assets = [];
+  DateTime startDate = DateTime.now();
+  DateTime endDate =  DateTime.now();
+
 
   @override
   void initState() {
     super.initState();
-    getImagesFromGallery();
+    selectDateRange(context);
+  }
+
+  Future<void> selectDateRange(BuildContext context) async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null) {
+      setState(() {
+        startDate = picked.start;
+        endDate = picked.end;
+        getImagesFromGallery();
+      });
+    }
   }
 
   Future<void> getImagesFromGallery() async {
 
     try {
-      List<AssetEntity> fetchedAssets = await PhotoManager.getAssetListRange(start: 0, end: 1000000);
+      AssetPathEntity? path ;
+      final List<AssetPathEntity> paths = await PhotoManager.getAssetPathList(
+        type: RequestType.image,
+        filterOption: FilterOptionGroup(createTimeCond: DateTimeCond(min:startDate , max: endDate)),
+      );
+      setState(() {
+        path = paths.first;
+      });
+      final List<AssetEntity> fetchedAssets = await path!.getAssetListRange(start: 0, end: 100000);
+
 
       setState(() {
         assets = fetchedAssets;
       });
 
-      for(AssetEntity ass in assets){
-        final file = await (ass.file);
-        final file2 = File(file!.path) ;
-        //take the date out from hereeeeeeeee
-        final tags = await readExifFromBytes(file2.readAsBytesSync());
-
-        if (tags.containsKey('EXIF DateTimeOriginal')) {
-            final dateString = tags['EXIF DateTimeOriginal']?.printable;
-            final imageDate = DateTime.parse(dateString!.replaceFirst(':', '-').replaceFirst(':', '-'));
-            if (imageDate.isAfter(_startDate!) && imageDate.isBefore(_endDate!)) {}
-        }
-
-
-
-
-      }
+      
     } catch (e) {
       // Handle error fetching assets
       print('Error fetching assets: $e');
@@ -64,6 +77,16 @@ class _HomePageState extends State<HomePage> {
       home: Scaffold(
         appBar: AppBar(
           title: const Text('All Gallery Images'),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.date_range),
+              onPressed: () {
+                selectDateRange(context);
+                
+              },
+              
+            ),
+          ],
         ),
         body: GridView.builder(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -80,6 +103,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
 class AssetThumbnail extends StatelessWidget{
   const AssetThumbnail({super.key, required this.asset});
   final AssetEntity asset;
