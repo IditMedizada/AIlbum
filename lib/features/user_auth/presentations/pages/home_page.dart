@@ -15,35 +15,6 @@ class _HomePageState extends State<HomePage> {
   DateTime startDate = DateTime.now();
   DateTime endDate =  DateTime.now();
 
-  // final FaceRecognitionService faceRecognitionService = FaceRecognitionService();
-  // File? userImage;
-  // List<File> galleryImages=[];
-  // List<String> matchedImages=[];
-  // final ImagePicker picker = ImagePicker();
-
-  // // chose face for face rec
-  // Future<void> captureUserImage() async{
-  //   final image = await picker.pickImage(source: ImageSource.camera);
-  //   setState(() {
-  //     if(image != null){
-  //       userImage = File(image.path);
-  //     }
-  //   });
-
-  // }
-
-  // Future<void> recognizeFaces()async{
-  //   // assets.forEach((image) async{
-  //   //   final filePath = await LecleFlutterAbsolutePath.getAbsolutePath(image.);
-  //   // })
-  //   // if(userImage == null || galleryImages.isEmpty)return;
-  //   // final imagesList = await faceRecognitionService.recognizeFaces(userImage!, galleryImages);
-  //   // setState(() {
-  //   //   assets=imagesList;
-  //   // });
-  // }
-
-
   @override
   void initState() {
     super.initState();

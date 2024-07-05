@@ -49,6 +49,7 @@ class Faces extends State<Face_rec> {
       return;
     }
     status = "Processing...";
+
     var request = MatchFacesRequest([mfImage1!, mfImage2!]);
     var response = await faceSdk.matchFaces(request);
     var split = await faceSdk.splitComparedFaces(response.results, 0.75);

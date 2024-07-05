@@ -53,10 +53,7 @@ dependencies:
   all_gallery_images: ^0.1.0+1
   photo_manager: ^3.2.0
   photo_view: ^0.15.0
-  flutter_face_api: ^6.2.1
-  flutter_face_core_basic: ^6.1.0
   flutter_face_api_beta: ^0.0.121
-  flutter_face_core_match: ^6.2.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
