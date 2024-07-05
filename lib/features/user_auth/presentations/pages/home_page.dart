@@ -1,14 +1,9 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'dart:io';
-import 'package:exif/exif.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:gallery_picker/gallery_picker.dart';
-import 'package:all_gallery_images/model/StorageImages.dart';
+import 'package:my_app/features/user_auth/presentations/pages/faces.dart';
 import 'dart:async';
-import 'package:all_gallery_images/all_gallery_images.dart';
 import 'package:photo_manager/photo_manager.dart';
+
 
 class HomePage extends StatefulWidget {
   @override
@@ -19,6 +14,34 @@ class _HomePageState extends State<HomePage> {
   List<AssetEntity> assets = [];
   DateTime startDate = DateTime.now();
   DateTime endDate =  DateTime.now();
+
+  // final FaceRecognitionService faceRecognitionService = FaceRecognitionService();
+  // File? userImage;
+  // List<File> galleryImages=[];
+  // List<String> matchedImages=[];
+  // final ImagePicker picker = ImagePicker();
+
+  // // chose face for face rec
+  // Future<void> captureUserImage() async{
+  //   final image = await picker.pickImage(source: ImageSource.camera);
+  //   setState(() {
+  //     if(image != null){
+  //       userImage = File(image.path);
+  //     }
+  //   });
+
+  // }
+
+  // Future<void> recognizeFaces()async{
+  //   // assets.forEach((image) async{
+  //   //   final filePath = await LecleFlutterAbsolutePath.getAbsolutePath(image.);
+  //   // })
+  //   // if(userImage == null || galleryImages.isEmpty)return;
+  //   // final imagesList = await faceRecognitionService.recognizeFaces(userImage!, galleryImages);
+  //   // setState(() {
+  //   //   assets=imagesList;
+  //   // });
+  // }
 
 
   @override
@@ -38,8 +61,16 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         startDate = picked.start;
         endDate = picked.end;
-        getImagesFromGallery();
+        
       });
+      await getImagesFromGallery();
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Face_rec(assets: assets),
+        ),
+      );
+
     }
   }
 
@@ -96,7 +127,9 @@ class _HomePageState extends State<HomePage> {
           itemBuilder: (_, index) {
             return AssetThumbnail(
               asset: assets[index],
+
             );
+            
           },
         ),
       ),

@@ -9,9 +9,14 @@ list(APPEND FLUTTER_PLUGIN_LIST
   firebase_core
   firebase_storage
   permission_handler_windows
+  screen_retriever
+  url_launcher_windows
+  window_manager
+  window_to_front
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
+  python_ffi_cpython
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)
