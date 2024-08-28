@@ -4,50 +4,88 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:flutter_face_api_beta/flutter_face_api.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:my_app/features/user_auth/presentations/pages/MatchedImagesPage.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 
 class Faces extends State<Face_rec> {
   var faceSdk = FaceSDK.instance;
+  late List<Future<Uint8List?>> assetBytesFutures;
+  late List<Uint8List?> assetBytesList;
+  List<Uint8List?> assetBytesListMatch=[];
 
   var _status = "nil";
   var _similarityStatus = "nil";
   var _livenessStatus = "nil";
   var _uiImage1 = Image.asset('assets/images/portrait.png');
-  var _uiImage2 = Image.asset('assets/images/portrait.png');
+  // var _uiImage2 = Image.asset('assets/images/portrait.png');
 
   set status(String val) => setState(() => _status = val);
   set similarityStatus(String val) => setState(() => _similarityStatus = val);
   set livenessStatus(String val) => setState(() => _livenessStatus = val);
   set uiImage1(Image val) => setState(() => _uiImage1 = val);
-  set uiImage2(Image val) => setState(() => _uiImage2 = val);
+  // set uiImage2(Image val) => setState(() => _uiImage2 = val);
 
   MatchFacesImage? mfImage1;
-  MatchFacesImage? mfImage2;
 
   void init() async {
     super.initState();
+    assetBytesFutures = List.generate(widget.assets.length, (index) => fetchBytesForAsset(widget.assets[index]));
+    assetBytesList = List.filled(widget.assets.length, null);
+    fetchAssetBytes();
     if (!await initialize()) return;
     status = "Ready";
   }
 
-  startLiveness() async {
-    var result = await faceSdk.startLiveness(
-      config: LivenessConfig(skipStep: [LivenessSkipStep.ONBOARDING_STEP]),
-      notificationCompletion: (notification) {
-        print(notification.status);
-      },
-    );
-    if (result.image == null) return;
-    setImage(result.image!, ImageType.LIVE, 1);
-    livenessStatus = result.liveness.name.toLowerCase();
+
+  Future<void> fetchAssetBytes() async {
+    try {
+      List<Uint8List?> results = await Future.wait(assetBytesFutures);
+      setState(() {
+        assetBytesList = results;
+      });
+    } catch (e) {
+      print('Error fetching asset bytes: $e');
+      // Handle error appropriately
+    }
   }
 
-  matchFaces() async {
-    if (mfImage1 == null || mfImage2 == null) {
-      status = "Both images required!";
-      return;
+  Future<Uint8List?> fetchBytesForAsset(AssetEntity asset) async {
+    try {
+      var file = await asset.file;
+      if (file != null) {
+        return await file.readAsBytes();
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching bytes for asset: $e');
+      return null;
     }
+  }
+
+  matchAssets() async {
+    for (var asset in assetBytesList) {
+      await setImage(asset!, ImageType.PRINTED);
+    }
+
+    navigateToMatchedImagesPage();
+    return;
+
+  }
+
+  void navigateToMatchedImagesPage() {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => MatchedImagesPage(assetBytesListMatch: assetBytesListMatch),
+    ),
+  );
+}
+
+
+  matchFaces(MatchFacesImage? mfImage2) async {
+
     status = "Processing...";
 
     var request = MatchFacesRequest([mfImage1!, mfImage2!]);
@@ -57,18 +95,22 @@ class Faces extends State<Face_rec> {
     similarityStatus = "failed";
     if (match.isNotEmpty) {
       similarityStatus = (match[0].similarity * 100).toStringAsFixed(2) + "%";
+      setState(() {
+        assetBytesListMatch.add(mfImage2.image);
+
+      });
+      assetBytesListMatch.add(mfImage2.image);
     }
     status = "Ready";
+    return;
   }
 
   clearResults() {
     status = "Ready";
     similarityStatus = "nil";
     livenessStatus = "nil";
-    uiImage2 = Image.asset('assets/images/portrait.png');
+    // uiImage2 = Image.asset('assets/images/portrait.png');
     uiImage1 = Image.asset('assets/images/portrait.png');
-    mfImage1 = null;
-    mfImage2 = null;
   }
 
   // If 'assets/regula.license' exists, init using license(enables offline match)
@@ -94,36 +136,38 @@ class Faces extends State<Face_rec> {
     }
   }
 
-  setImage(Uint8List bytes, ImageType type, int number) {
+  setImage(Uint8List bytes, ImageType type) {
     similarityStatus = "nil";
     var mfImage = MatchFacesImage(bytes, type);
-    if (number == 1) {
-      mfImage1 = mfImage;
-      uiImage1 = Image.memory(bytes);
-      livenessStatus = "nil";
-    }
-    if (number == 2) {
-      mfImage2 = mfImage;
-      uiImage2 = Image.memory(bytes);
-    }
+    matchFaces(mfImage);
+
   }
 
-  Widget useGallery(int number) {
+  setRecImage(Uint8List bytes, ImageType type) {
+    similarityStatus = "nil";
+    var mfImage = MatchFacesImage(bytes, type);
+    
+    mfImage1 = mfImage;
+    uiImage1 = Image.memory(bytes);
+
+  }
+
+  Widget useGallery() {
     return textButton("Use gallery", () async {
       Navigator.pop(context);
       var image = await ImagePicker().pickImage(source: ImageSource.gallery);
       if (image != null) {
-        setImage(File(image.path).readAsBytesSync(), ImageType.PRINTED, number);
+        setRecImage(File(image.path).readAsBytesSync(), ImageType.PRINTED);
       }
     });
   }
 
-  Widget useCamera(int number) {
+  Widget useCamera() {
     return textButton("Use camera", () async {
       Navigator.pop(context);
       var response = await faceSdk.startFaceCapture();
       var image = response.image;
-      if (image != null) setImage(image.image, image.imageType, number);
+      if (image != null) setRecImage(image.image, image.imageType);
     });
   }
 
@@ -154,7 +198,7 @@ class Faces extends State<Face_rec> {
         context: context,
         builder: (BuildContext context) => AlertDialog(
           title: Text("Select option"),
-          actions: [useGallery(number), useCamera(number)],
+          actions: [useGallery(), useCamera()],
         ),
       );
 
@@ -169,10 +213,8 @@ class Faces extends State<Face_rec> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             image(_uiImage1, () => setImageDialog(bc, 1)),
-            image(_uiImage2, () => setImageDialog(bc, 2)),
             Container(margin: EdgeInsets.fromLTRB(0, 0, 0, 15)),
-            button("Match", () => matchFaces()),
-            button("Liveness", () => startLiveness()),
+            button("Match", () => matchAssets()),
             button("Clear", () => clearResults()),
             Container(margin: EdgeInsets.fromLTRB(0, 15, 0, 0)),
             Row(
@@ -188,6 +230,8 @@ class Faces extends State<Face_rec> {
       ),
     );
   }
+
+  
 
   @override
   void initState() {

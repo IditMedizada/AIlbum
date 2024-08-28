@@ -18,7 +18,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    selectDateRange(context);
   }
 
   Future<void> selectDateRange(BuildContext context) async {
@@ -57,13 +56,14 @@ class _HomePageState extends State<HomePage> {
         path = paths.first;
       });
       final List<AssetEntity> fetchedAssets = await path!.getAssetListRange(start: 0, end: 100000);
+      
 
 
       setState(() {
         assets = fetchedAssets;
       });
 
-      
+   
     } catch (e) {
       // Handle error fetching assets
       print('Error fetching assets: $e');

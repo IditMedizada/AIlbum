@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:my_app/features/user_auth/presentations/pages/home_page.dart';
 import 'package:my_app/features/user_auth/presentations/pages/sign_up_page.dart';
 import 'package:my_app/features/user_auth/presentations/widgets/form_container_widget.dart';
+import 'package:my_app/helperFunctions/gallery_sync.dart';
 
 import '../../../../global/common/toast.dart';
 import '../../firebase_auth_implementation/firebase_auth_services.dart';
@@ -96,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
     });
     if (user != null){
         showToast(message: 'User is successfuly sign in');
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> HomePage()),(route)=>false);
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> GallerySync()),(route)=>false);
     }else{
      showToast(message:"Some error happend");
     }
