@@ -1,4 +1,4 @@
-const { uploadPhotoToFirebase, addPhotoMetadataToFirebase } = require('../services/firebaseService');
+const { uploadPhotoToFirebase, uploadKnownFacesToFirebase,viewFileContent } = require('../services/firebaseService');
 const { processImage } = require('../services/faceRecognitionService');
 
 exports.addPhoto = async (req, res) => {
@@ -22,10 +22,15 @@ exports.addPhoto = async (req, res) => {
 
         // Upload photo to Firebase Storage
         const photoUrl = await uploadPhotoToFirebase(buffer, originalName,user, faceIdsResult.faceIds,date );
-        // console.log("hereeeee");
+        console.log("before known" + photoUrl);
+        const knownUrl = await uploadKnownFacesToFirebase(faceIdsResult.knownFaceIds.at(-1),faceIdsResult.knownFaceEncodings.at(-1),user );
+        
         // Save metadata to Firebase Realtime Database
         // await addPhotoMetadataToFirebase(photoUrl, faceIdsResult.faceIds);
-        console.log("biiiii222222");
+       
+        console.log("after known  " + knownUrl);
+        console.log("   \n");
+        await viewFileContent(user);
         return res.status(200).json({ photoUrl, faceIds });
     } catch (error) {
         return res.status(500).json({ error: error.message });

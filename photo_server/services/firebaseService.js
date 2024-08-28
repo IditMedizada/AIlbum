@@ -30,6 +30,33 @@ exports.uploadPhotoToFirebase = async (buffer, filename, user, faceIds,date) => 
 }
 };
 
+exports.uploadKnownFacesToFirebase = async (knownFaces, knownFaceEncodings, user) => {
+    try {
+        console.log("known faces start " + knownFaces);
+        const file = bucket.file(`known_faces/${user}/${knownFaces}`);
+        const buffer = Buffer.from(JSON.stringify(knownFaceEncodings));
+        await file.save(buffer);
+        
+        // Set metadata
+        const metadata = {
+            metadata: {
+                contentType: 'application/json',  // Set the appropriate content type
+                metadata: {
+                    user: user,
+                    knownFacesId: knownFaces
+                }
+            }
+        };
+        await file.setMetadata(metadata);
+        
+        return `https://storage.googleapis.com/${bucket.name}/known_faces/${user}/${knownFaces}`;
+    } catch (error) {
+        console.error("Error uploading known faces to Firebase Storage:", error);
+        throw error;
+    }
+};
+
+
 exports.addPhotoMetadataToFirebase = async (photoUrl, faceIds) => {
     try {
         console.log("biiiiii");
@@ -46,6 +73,18 @@ exports.addPhotoMetadataToFirebase = async (photoUrl, faceIds) => {
         console.log("end biiiii 1");
     } catch (error) {
         console.error("Error in addPhotoMetadataToFirebase:", error);
+    }
+
+};
+
+
+exports.viewFileContent = async(user) =>{
+    try {
+        const file = bucket.file(`known_faces/${user}/1`);
+        const [contents] = await file.download();
+        console.log('File content:', contents.toString('utf-8'));
+    } catch (error) {
+        console.error('Error reading file:', error);
     }
 };
 

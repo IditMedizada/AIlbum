@@ -61,7 +61,7 @@ exports.processImage = async (imageBase64) => {
 
 
     // Return the recognized face IDs
-    return { faceIds };
+    return { faceIds , knownFaceIds , knownFaceEncodings};
   } catch (error) {
     console.error('Error processing image:', error);
     throw error;
