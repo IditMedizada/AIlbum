@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:my_app/features/user_auth/presentations/pages/home_page.dart';
 import 'package:my_app/features/user_auth/presentations/pages/sign_up_page.dart';
 import 'package:my_app/features/user_auth/presentations/widgets/form_container_widget.dart';
 import 'package:my_app/helperFunctions/gallery_sync.dart';

@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:path/path.dart';
-import 'package:mime/mime.dart';
 
 class FaceRecognitionService {
   final String _baseUrl = 'http://127.0.0.1:5000/recognize'; // Replace with your backend URL
