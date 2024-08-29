@@ -29,7 +29,7 @@ exports.processImage = async (imageBase64) => {
 
     // Configure TinyFaceDetector options
     const options = new faceapi.TinyFaceDetectorOptions({ 
-      inputSize: 512, 
+      inputSize: 608, 
       scoreThreshold: 0.3 
     });
 

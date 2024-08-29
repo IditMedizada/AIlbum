@@ -31,7 +31,7 @@ exports.addPhoto = async (req, res) => {
         console.log("after known  " + knownUrl);
         console.log("   \n");
        // await viewFileContent(user);
-        return res.status(200).json({ photoUrl, faceIds });
+       return res.status(200).json({ photoUrl, faceIds: faceIdsResult.faceIds });
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }
