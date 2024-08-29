@@ -10,7 +10,7 @@ faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 // Load Face API models
 const MODEL_URL = path.join(__dirname, '../models');
 Promise.all([
-  faceapi.nets.ssdMobilenetv1.loadFromDisk(MODEL_URL),
+  faceapi.nets.tinyFaceDetector.loadFromDisk(MODEL_URL),
   faceapi.nets.faceLandmark68Net.loadFromDisk(MODEL_URL),
   faceapi.nets.faceRecognitionNet.loadFromDisk(MODEL_URL)
 ]).then(() => console.log('Face API models loaded'));
@@ -21,23 +21,29 @@ const knownFaceIds = [];
 
 exports.processImage = async (imageBase64) => {
   try {
-
-    console.log("hihihihihi");
     // Convert base64 string to a buffer
     const imageBuffer = Buffer.from(imageBase64, 'base64');
     // Load image into canvas
     const image = await canvas.loadImage(imageBuffer);
     const canvasImage = faceapi.createCanvasFromMedia(image);
 
+    // Configure TinyFaceDetector options
+    const options = new faceapi.TinyFaceDetectorOptions({ 
+      inputSize: 512, 
+      scoreThreshold: 0.3 
+    });
+
     // Detect faces and extract face descriptors
-    const detections = await faceapi.detectAllFaces(canvasImage)
+    const detections = await faceapi.detectAllFaces(canvasImage, options)
       .withFaceLandmarks()
       .withFaceDescriptors();
 
     const faceIds = [];
+    console.log(`Number of faces detected: ${detections.length}`);
+
     for (const detection of detections) {
       const faceEncoding = detection.descriptor;
-      
+
       // Compare detected face with known faces
       const distances = knownFaceEncodings.map(encoding =>
         faceapi.euclideanDistance(encoding, faceEncoding)
@@ -56,12 +62,11 @@ exports.processImage = async (imageBase64) => {
         faceIds.push(newId);
       }
     }
-    console.log("known faces:  " + knownFaceIds);
-    console.log("id faces:  " + faceIds);
-
+    console.log("Known faces: " + knownFaceIds);
+    console.log("ID faces: " + faceIds);
 
     // Return the recognized face IDs
-    return { faceIds , knownFaceIds , knownFaceEncodings};
+    return { faceIds, knownFaceIds, knownFaceEncodings };
   } catch (error) {
     console.error('Error processing image:', error);
     throw error;

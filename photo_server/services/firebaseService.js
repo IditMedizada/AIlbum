@@ -12,7 +12,7 @@ const bucket = admin.storage().bucket();
 exports.uploadPhotoToFirebase = async (buffer, filename, user, faceIds,date) => {
     try {
 
-        const file = bucket.file(`photos/${user}/${filename}`);
+        const file = bucket.file(`${user}/photos/${filename}`);
         await file.save(buffer);
         // Set metadata including face IDs
         const metadata = {
@@ -23,7 +23,7 @@ exports.uploadPhotoToFirebase = async (buffer, filename, user, faceIds,date) => 
             }
         };
         await file.setMetadata(metadata);
-        return `https://storage.googleapis.com/${bucket.name}/photos/${user}/${filename}`;
+        return `https://storage.googleapis.com/${bucket.name}/${user}/photos/${filename}`;
     } catch (error) {
         console.error("Error uploading photo to Firebase Storage:", error);
         throw error;
@@ -33,7 +33,7 @@ exports.uploadPhotoToFirebase = async (buffer, filename, user, faceIds,date) => 
 exports.uploadKnownFacesToFirebase = async (knownFaces, knownFaceEncodings, user) => {
     try {
         console.log("known faces start " + knownFaces);
-        const file = bucket.file(`known_faces/${user}/${knownFaces}`);
+        const file = bucket.file(`${user}/known_faces/${knownFaces}`);
         const buffer = Buffer.from(JSON.stringify(knownFaceEncodings));
         await file.save(buffer);
         
@@ -49,7 +49,7 @@ exports.uploadKnownFacesToFirebase = async (knownFaces, knownFaceEncodings, user
         };
         await file.setMetadata(metadata);
         
-        return `https://storage.googleapis.com/${bucket.name}/known_faces/${user}/${knownFaces}`;
+        return `https://storage.googleapis.com/${bucket.name}/${user}/known_faces/${knownFaces}`;
     } catch (error) {
         console.error("Error uploading known faces to Firebase Storage:", error);
         throw error;
