@@ -19,9 +19,20 @@ class FirebaseService {
         });
     }
 
+    static async isPhotoProcessed(filePath) {
+        try {
+            const [metadata] = await bucket.file(filePath).getMetadata();
+            return metadata.metadata && metadata.metadata.processed === 'true';
+        } catch (error) {
+            // Handle the case where the metadata or file doesn't exist
+            return false;
+        }
+    }
+
     static cleanUp(tempFilePath) {
         fs.unlinkSync(tempFilePath);
     }
 }
 
 module.exports = FirebaseService;
+

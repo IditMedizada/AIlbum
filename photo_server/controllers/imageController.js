@@ -1,4 +1,4 @@
-const firebaseService = require('../services/firebaseService');
+const firebaseService = require('../services/firebaseServices');
 const faceService = require('../services/faceService');
 
 exports.processImage = async (req, res) => {
