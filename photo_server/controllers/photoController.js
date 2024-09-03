@@ -37,15 +37,20 @@ class PhotoController {
             // console.log(`Processing ${newFiles.length} new files.`);
 
             for (const file of files) {
-                console.log("Processing file:", file.name);
                 const filePath = file.name;
+                const baseFolderPathup = photoPath.substring(0, photoPath.lastIndexOf('/'));
+                const baseFolderPath = baseFolderPathup.substring(0, baseFolderPathup.lastIndexOf('/')) + '/face_encodings';
+        
+                // Construct the path for the face encoding file
+                const encodingFilePath = `${baseFolderPath}/${faceId}.json`;
+                console.log("Processing file:", file.name);
                 const tempFilePath = await FirebaseService.downloadImage(filePath); // Download the image to a temp path
                 const imageBuffer = fs.readFileSync(tempFilePath); // Read the image from the temp path
 
                 // Load the image using node-canvas
                 const img = await canvas.loadImage(imageBuffer);
 
-                const faceIds = await FaceService.processFaces(img);
+                const faceIds = await FaceService.processFaces(img,filePath);
                 await FirebaseService.updatePhotoMetadata(filePath, faceIds);
 
                 FirebaseService.cleanUp(tempFilePath); // Clean up the temp file

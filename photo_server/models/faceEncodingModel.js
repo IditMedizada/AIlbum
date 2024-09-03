@@ -1,8 +1,12 @@
 const { bucket } = require('../firebaseConfig');
 
 class FaceEncodingModel {
-    static async saveFaceEncoding(faceId, descriptor) {
-        const encodingFilePath = `face_encodings/${faceId}.json`;
+    static async saveFaceEncoding(faceId, descriptor,photoPath) {
+        const baseFolderPathup = photoPath.substring(0, photoPath.lastIndexOf('/'));
+        const baseFolderPath = baseFolderPathup.substring(0, baseFolderPathup.lastIndexOf('/')) + '/face_encodings';
+
+        // Construct the path for the face encoding file
+        const encodingFilePath = `${baseFolderPath}/${faceId}.json`;
         await bucket.file(encodingFilePath).save(JSON.stringify(descriptor), {
             contentType: 'application/json'
         });

@@ -24,7 +24,7 @@ class FaceService {
             ]);
     }
     
-    static async processFaces(img) {
+    static async processFaces(img,photoPath) {
         const detections = await faceapi.detectAllFaces(img)
             .withFaceLandmarks()
             .withFaceDescriptors();
@@ -49,7 +49,7 @@ class FaceService {
                 faceId = matchingFaceId;
             } else {
                 faceId = uuidv4();
-                await FaceEncodingModel.saveFaceEncoding(faceId, descriptor);
+                await FaceEncodingModel.saveFaceEncoding(faceId, descriptor,photoPath);
             }
 
             faceIds.push(faceId);
