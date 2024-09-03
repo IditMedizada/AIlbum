@@ -8,14 +8,6 @@ faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 const MODEL_URL = path.join(__dirname, '../models');
 const FaceEncodingModel = require('../models/faceEncodingModel');
 
-// Load models only once
-Promise.all([
-    faceapi.nets.tinyFaceDetector.loadFromDisk(MODEL_URL),
-    faceapi.nets.faceLandmark68Net.loadFromDisk(MODEL_URL),
-    faceapi.nets.ssdMobilenetv1.loadFromDisk(MODEL_URL),
-    faceapi.nets.faceRecognitionNet.loadFromDisk(MODEL_URL)
-]);
-
 class FaceService {
     // Load models for use (ensure models are loaded before processing images)
     static async loadModels() {
@@ -33,7 +25,7 @@ class FaceService {
             .withFaceLandmarks()
             .withFaceDescriptors();
 
-        const faceEncodings = await FaceEncodingModel.getFaceEncodings();
+        const faceEncodings = await FaceEncodingModel.getFaceEncodings(photoPath);
         const faceIds = [];
 
         for (const detection of detections) {
@@ -52,14 +44,14 @@ class FaceService {
             if (matchingFaceId) {
                 faceId = matchingFaceId;
                 // Always add the current photo path to the face encoding
-                await FaceEncodingModel.addPhotoToFace(faceId, photoPath);
+                
                
             } else {
                 faceId = uuidv4();
                 await FaceEncodingModel.saveFaceEncoding(faceId, descriptor, photoPath); // Save new face encoding with photo path
                 // Always add the current photo path to the face encoding
-                await FaceEncodingModel.addPhotoToFace(faceId, photoPath);
             }
+            await FaceEncodingModel.addPhotoToFace(faceId, photoPath);
 
             faceIds.push(faceId);
         }

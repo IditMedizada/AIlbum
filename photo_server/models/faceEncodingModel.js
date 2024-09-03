@@ -1,24 +1,23 @@
 const { bucket } = require('../firebaseConfig');
 const path = require('path');
-
+const expectedEncodingLength = 128;
 class FaceEncodingModel {
     // Save a new face encoding or update an existing one
     static async saveFaceEncoding(faceId, descriptor, photoPath) {
-        // Define the base folder path as the parent folder of the photo
         const baseFolderPathup = photoPath.substring(0, photoPath.lastIndexOf('/'));
         const baseFolderPath = baseFolderPathup.substring(0, baseFolderPathup.lastIndexOf('/')) + '/face_encodings';
-
-        // Construct the path for the face encoding file
         const encodingFilePath = `${baseFolderPath}/${faceId}.json`;
-
-        // Initialize faceData
+    
+        // Check descriptor length
+        if (descriptor.length !== expectedEncodingLength) {
+            throw new Error(`Invalid descriptor length: expected ${expectedEncodingLength}, got ${descriptor.length}`);
+        }
+    
         let faceData = { descriptor, photos: [photoPath] };
-
+    
         try {
-            // Check if the face ID already exists
             const [exists] = await bucket.file(encodingFilePath).exists();
             if (exists) {
-                // Update existing face encoding
                 const [content] = await bucket.file(encodingFilePath).download();
                 const existingData = JSON.parse(content);
                 faceData = {
@@ -29,12 +28,12 @@ class FaceEncodingModel {
         } catch (error) {
             console.error(`Error checking face encoding: ${error.message}`);
         }
-
-        // Save or update face encoding with associated photos
+    
         await bucket.file(encodingFilePath).save(JSON.stringify(faceData), {
             contentType: 'application/json'
         });
     }
+    
 
     // Add a new photo to an existing face encoding
     static async addPhotoToFace(faceId, photoPath) {
@@ -63,7 +62,7 @@ class FaceEncodingModel {
                         photos: JSON.stringify(photos)
                     }
                 });
-    
+                console.log("photos for id: ",faceId," are: ", photos);
                 console.log(`Updated face encoding with new photo path: ${photoPath}`);
             }
         } catch (error) {
@@ -74,20 +73,43 @@ class FaceEncodingModel {
     
 
     // Retrieve all face encodings
-    static async getFaceEncodings() {
-        const [files] = await bucket.getFiles({ prefix: 'face_encodings/' });
+    static async getFaceEncodings(photoPath) {
+        const baseFolderPathup = photoPath.substring(0, photoPath.lastIndexOf('/'));
+        const baseFolderPath = baseFolderPathup.substring(0, baseFolderPathup.lastIndexOf('/')) + '/face_encodings/';
+        console.log("baseFolderPath: ", baseFolderPath);
+        const [files] = await bucket.getFiles({ prefix: baseFolderPath });
         const faceEncodings = [];
-
+    
         for (const file of files) {
-            const [content] = await file.download();
-            faceEncodings.push({
-                faceId: path.basename(file.name, '.json'),
-                descriptor: JSON.parse(content)
-            });
+            try {
+                const [content] = await file.download();
+                const contentStr = content.toString('utf8');
+                
+                try {
+                    const jsonContent = JSON.parse(contentStr);
+                  
+                    // Validate descriptor length
+                    if (!Array.isArray(jsonContent.descriptor) || jsonContent.descriptor.length !== expectedEncodingLength) {
+                        console.warn(`Invalid descriptor length for file ${file.name}`);
+                        continue; // Skip invalid file
+                    }
+                    
+                    faceEncodings.push({
+                        faceId: path.basename(file.name, '.json'),
+                        descriptor: jsonContent.descriptor
+                    });
+                } catch (parseError) {
+                    console.error(`Failed to parse JSON for file ${file.name}:`, parseError);
+                }
+            } catch (e) {
+                console.error("Error processing file: ", e);
+            }
         }
-
+    
         return faceEncodings;
     }
+    
+    
 }
 
 module.exports = FaceEncodingModel;
