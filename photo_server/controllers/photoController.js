@@ -29,14 +29,14 @@ class PhotoController {
             await FaceService.loadModels();
 
             // Retrieve processed photos
-            const processedPhotos = await getProcessedPhotosForUser(user); // Implement this function as needed
+            // const processedPhotos = await getProcessedPhotosForUser(user); // Implement this function as needed
 
-            // Filter out already processed photos
-            const newFiles = files.filter(file => !processedPhotos.includes(file.name));
+            // // Filter out already processed photos
+            // const newFiles = files.filter(file => !processedPhotos.includes(file.name));
 
-            console.log(`Processing ${newFiles.length} new files.`);
+            // console.log(`Processing ${newFiles.length} new files.`);
 
-            for (const file of newFiles) {
+            for (const file of files) {
                 console.log("Processing file:", file.name);
                 const filePath = file.name;
                 const tempFilePath = await FirebaseService.downloadImage(filePath); // Download the image to a temp path
