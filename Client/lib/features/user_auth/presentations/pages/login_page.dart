@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:my_app/features/user_auth/presentations/pages/sign_up_page.dart';
 import 'package:my_app/features/user_auth/presentations/widgets/form_container_widget.dart';
 import 'package:my_app/helperFunctions/gallery_sync.dart';
-import 'package:workmanager/workmanager.dart';
 import '../../../../global/common/toast.dart';
 import '../../firebase_auth_implementation/firebase_auth_services.dart';
 
@@ -30,7 +29,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Login"),
+        title: const Text("Login"),
       ),
       body: Center(
         child: Padding(
@@ -38,20 +37,20 @@ class _LoginPageState extends State<LoginPage> {
                   child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text("Login",style: TextStyle(fontSize: 27, fontWeight: FontWeight.bold),),
+          const Text("Login",style: TextStyle(fontSize: 27, fontWeight: FontWeight.bold),),
           SizedBox(height: 30,),
           FormContainerWidget(
             controller: emailController,
             hintText: "Email",
             isPasswordField: false,
           ),
-          SizedBox(height: 10,),
+          const SizedBox(height: 10,),
           FormContainerWidget(
             controller: passwordController,
             hintText: "Password",
             isPasswordField: true,
           ),
-          SizedBox(height: 30,),
+          const SizedBox(height: 30,),
           GestureDetector(
             onTap: login,
             child:Container(
@@ -61,19 +60,19 @@ class _LoginPageState extends State<LoginPage> {
               color: Colors.blue,
               borderRadius: BorderRadius.circular(10),
             ),
-            child:Center( child: isSigning ? CircularProgressIndicator(color: Colors.white,): Text("Login",style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),)
+            child:Center( child: isSigning ? const CircularProgressIndicator(color: Colors.white,): const Text("Login",style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),)
           )
           ),
-          SizedBox(height: 20,),
+          const SizedBox(height: 20,),
           Row(mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("Don't have an account?"),
-            SizedBox(width: 5,),
+            const Text("Don't have an account?"),
+            const SizedBox(width: 5,),
             GestureDetector(
               onTap: (){
-                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> SignUpPage()),(route)=>false);
+                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const SignUpPage()),(route)=>false);
               },
-              child: Text("Sign Up", style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold ),)
+              child: const Text("Sign Up", style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold ),)
             )
           ],)
         ],
@@ -97,12 +96,12 @@ class _LoginPageState extends State<LoginPage> {
     if (user != null){
         showToast(message: 'User is successfuly sign in');
 
-
-        Workmanager().registerPeriodicTask(
-          "nightlyPhotoUpload",
-          "nightlyPhotoUploadTask",
-          frequency: Duration(minutes: 15), // Schedule every 24 hours
-        );
+    // await Workmanager().registerPeriodicTask(
+    //   "nightlyPhotoUpload",
+    //   "nightlyPhotoUploadTask",
+    //   frequency: Duration(minutes: 15), // Minimum allowed frequency
+    // );
+      
   
         Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> GallerySync()),(route)=>false);
     }else{

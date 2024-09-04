@@ -178,15 +178,15 @@ class Faces extends State<Face_rec> {
 
   Widget button(String text, Function() onPressed) {
     return Container(
+      width: 250,
       child: textButton(text, onPressed,
           style: ButtonStyle(
             backgroundColor: WidgetStateProperty.all<Color>(Colors.black12),
           )),
-      width: 250,
     );
   }
 
-  Widget text(String text) => Text(text, style: TextStyle(fontSize: 18));
+  Widget text(String text) => Text(text, style: const TextStyle(fontSize: 18));
   Widget textButton(String text, Function() onPressed, {ButtonStyle? style}) =>
       TextButton(
         child: Text(text),

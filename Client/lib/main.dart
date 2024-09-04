@@ -4,45 +4,108 @@ import 'package:flutter/material.dart';
 import 'package:my_app/features/app/splash_screen/splash_screen.dart';
 import 'package:my_app/features/user_auth/presentations/pages/login_page.dart';
 import 'package:my_app/helperFunctions/gallery_sync.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:workmanager/workmanager.dart';
-
-Future main() async {
- 
-  WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp(
-      options: FirebaseOptions(
-        apiKey: "AIzaSyCRoY8tAawlcPC9GAZls4kturQQm23CVD0",
-         appId:  "1:808160337385:web:72decfeac9489d7bd97f78",
-          messagingSenderId: "808160337385",
-          projectId: "ailbum",
-          ),);
- Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
-  print("init night mode");
-  runApp(MyApp());
+Future<void> checkAndRequestPermissions() async {
+  PermissionStatus status = await Permission.storage.status;
+  if (!status.isGranted) {
+    status = await Permission.storage.request();
+    if (!status.isGranted) {
+      print("Storage permission denied. Cannot schedule background task.");
+      return;
+    }
+  }
 }
 void callbackDispatcher() {
-  print("hlooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
   Workmanager().executeTask((task, inputData) async {
-    // Retrieve the current user
-    String? user = FirebaseAuth.instance.currentUser?.uid;
-    if (user != null) {
-      // Call the function to upload new photos
-      await GallerySyncPage().uploadNewPhotos(user);
-    }
+    print("Callback Dispatcher invoked with task: $task and inputData: $inputData");
 
+    if (task == "nightlyPhotoUploadTask" && inputData != null) {
+      String? userId = inputData['user'];
+      if (userId != null) {
+        // Ensure this operation does not require any UI context
+        await GallerySyncPage().uploadNewPhotos(userId);
+        print("Photos uploaded for user: $userId");
+      }
+    }
     return Future.value(true);
   });
-  }
+}
+
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: const FirebaseOptions(
+      apiKey: "AIzaSyCRoY8tAawlcPC9GAZls4kturQQm23CVD0",
+      appId: "1:808160337385:web:72decfeac9489d7bd97f78",
+      messagingSenderId: "808160337385",
+      projectId: "ailbum",
+    ),
+  );
+
+  await checkAndRequestPermissions();  // Ensure permissions are granted
+
+  await Workmanager().cancelAll(); // Unregister old tasks (optional)
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+
+  await Workmanager().registerPeriodicTask(
+    "uniqueNightlyPhotoUploadTask",  // Use a unique task name
+    "nightlyPhotoUploadTask",
+    frequency: const Duration(minutes: 15), // Adjust frequency as needed
+    inputData: <String, dynamic>{
+      'user': FirebaseAuth.instance.currentUser?.uid,
+    },
+  );
+
+  runApp(const MyApp());
+}
+// void callbackDispatcher() {
+//   print("hlooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
+//   Workmanager().executeTask((task, inputData) async {
+//     // Retrieve the current user
+//     String? user = FirebaseAuth.instance.currentUser?.uid;
+//     if (user != null) {
+//       // Call the function to upload new photos
+//       await GallerySyncPage().uploadNewPhotos(user);
+//     }
+
+//     return Future.value(true);
+//   });
+//   }
+// Future<void> main()  async {
+ 
+//   WidgetsFlutterBinding.ensureInitialized();
+//     await Firebase.initializeApp(
+//       options: FirebaseOptions(
+//         apiKey: "AIzaSyCRoY8tAawlcPC9GAZls4kturQQm23CVD0",
+//          appId:  "1:808160337385:web:72decfeac9489d7bd97f78",
+//           messagingSenderId: "808160337385",
+//           projectId: "ailbum",
+//           ),);
+//  Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+
+//    Workmanager().registerPeriodicTask(
+//           "nightlyPhotoUpload",
+//           "nightlyPhotoUploadTask",
+//           frequency: Duration(minutes: 15), // Schedule every 24 hours
+//         );
+//   print("init night mode");
+//   runApp(MyApp());
+// }
+
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'AI-lbum',
       home: SplashScreen(
-        child: LoginPage(),
+        child:  LoginPage(),
         ),
     );
   }
