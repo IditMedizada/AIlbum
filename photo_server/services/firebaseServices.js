@@ -19,9 +19,9 @@ class FirebaseService {
         });
     }
 
-    static async isPhotoProcessed(filePath) {
+    static isPhotoProcessed(filePath) {
         try {
-            const [metadata] = await bucket.file(filePath).getMetadata();
+            const [metadata] = bucket.file(filePath).getMetadata();
             return metadata.metadata && metadata.metadata.processed === 'true';
         } catch (error) {
             // Handle the case where the metadata or file doesn't exist

@@ -1,11 +1,15 @@
 const express = require('express');
 const PhotoController = require('../controllers/photoController');
+const AlbumController = require('../controllers/albumController');
 const router = express.Router();
-
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
 // Middleware to parse JSON bodies
 router.use(express.json());
 
 // Define the route for processing photos
 router.post('/process-photos', PhotoController.processUploadedPhotos);
 
+
+router.post('/create-album', upload.array('photos'), AlbumController.createAlbum);
 module.exports = router;

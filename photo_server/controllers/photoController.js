@@ -32,7 +32,7 @@ class PhotoController {
                 const filePath = file.name;
 
                 // Check if the photo has already been processed
-                if (await FirebaseService.isPhotoProcessed(filePath)) {
+                if ( FirebaseService.isPhotoProcessed(filePath)) {
                     console.log(`Skipping already processed file: ${filePath}`);
                     continue;
                 }
