@@ -53,7 +53,7 @@ class GallerySyncPage extends State<GallerySync> {
       String? user = FirebaseAuth.instance.currentUser?.uid;
       final photos = await mainAlbum.getAssetListRange(start: start, end: start + pageSize);
       if (photos.isEmpty){
-         final uri = Uri.parse('http://192.168.1.36:5000/api/photos/process-photos');
+         final uri = Uri.parse('http://192.168.1.241:5000/api/photos/process-photos');
               print("user: $user");
               final response = await http.post(
                 uri,

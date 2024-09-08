@@ -40,9 +40,8 @@ class CreateAlbumState extends State<CreateAlbum> {
     }
     // Set the endDate to the end of the day
   final adjustedEndDate = endDate?.add(Duration(hours: 23, minutes: 59, seconds: 59));
-  final uri = Uri.parse('http://192.168.1.36:5000/api/photos/create-album');
+  final uri = Uri.parse('http://192.168.1.241:5000/api/photos/create-album');
   String? user = FirebaseAuth.instance.currentUser?.uid;
-  print("end date:" + (endDate?.toIso8601String() ?? ''));
   var request = http.MultipartRequest('POST', uri)
     ..fields['user'] = user ?? ''
     ..fields['startDate'] = startDate?.toIso8601String() ?? ''
@@ -60,8 +59,8 @@ class CreateAlbumState extends State<CreateAlbum> {
   if (response.statusCode == 200) {
     final responseBody = await response.stream.bytesToString();
     final responseData = jsonDecode(responseBody);
-    print('create album response:' + responseData);
-    final albumId = responseData['id']; 
+    final albumId = responseData['albumPath']; 
+    print(albumId);
     // Navigate to the photo display page with the albumId
     Navigator.push(
       context,

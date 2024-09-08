@@ -22,25 +22,28 @@ class PhotoDisplayPageState extends State<PhotoDisplayPage> {
     loadPhotos();
   }
 
-  Future <List<String>> loadPhotos() async {
+  Future <void> loadPhotos() async {
 
     try {
       // String? user = FirebaseAuth.instance.currentUser?.uid;
       List<String> imageUrls = [];
-        final storageRef = FirebaseStorage.instance.ref().child('$this.albumId'); // Specify the path
+      print(widget.albumId);
+      final storage = FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
+      Reference storageRef = storage.ref().child(widget.albumId);
+        // final storageRef = FirebaseStorage.instance.ref().child(widget.albumId); // Specify the path
 
         final ListResult result = await storageRef.listAll(); // Get all files in the path
 
         // Iterate over each item and get the download URL
         for (var ref in result.items) {
           final String url = await ref.getDownloadURL();
-          imageUrls.add(url);
+          setState(() {
+            photoUrls.add(url);
+          });
         }
 
-      return imageUrls;
     } catch (e) {
       print("Failed to load photos: $e");
-      return [];
     }
   }
 
