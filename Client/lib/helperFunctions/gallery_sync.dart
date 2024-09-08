@@ -1,13 +1,18 @@
+// ignore_for_file: avoid_print, prefer_interpolation_to_compose_strings
+
 import 'dart:convert';
 
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:my_app/features/user_auth/presentations/pages/createAlbum.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class GallerySync extends StatefulWidget {
+  const GallerySync({super.key});
+
   @override
   GallerySyncPage createState() => GallerySyncPage();
 }
@@ -57,10 +62,13 @@ class GallerySyncPage extends State<GallerySync> {
               );              
               if (response.statusCode == 200) {
                 print("Server notified of new uploads " +(response.body));
+                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const CreateAlbum()),(route)=>false);
+                break;
+
               } else {
                 print("Failed to notify server");
               }
-              break;
+
       } 
 
       for (final photo in photos) {
@@ -91,7 +99,6 @@ class GallerySyncPage extends State<GallerySync> {
  
 
   Future<void> uploadNewPhotos(String user) async {
-    print("uploadddddddddddddddddddddddddddddd");
     // Retrieve all image albums
     final albums = await PhotoManager.getAssetPathList(
       type: RequestType.image,
@@ -227,7 +234,7 @@ class GallerySyncPage extends State<GallerySync> {
   try {
     final storage = FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
 
-    Reference ref = storage.ref().child('$user/user_photos/$fileName.jpg');
+    Reference ref = storage.ref().child('$user/user_photos/$fileName');
     UploadTask uploadTask = ref.putFile(photo, SettableMetadata(
       customMetadata: {'photoDate': date},
     ));
@@ -268,7 +275,7 @@ class GallerySyncPage extends State<GallerySync> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Photo Album Sync'),
+        title: const Text('Photo Album Sync'),
       ),
       body: Column(
         children: [
@@ -279,7 +286,7 @@ class GallerySyncPage extends State<GallerySync> {
             child: photoUrls.isEmpty
                 ? const Center(child: Text('No photos uploaded yet.'))
                 : GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
                       crossAxisSpacing: 4.0,
                       mainAxisSpacing: 4.0,

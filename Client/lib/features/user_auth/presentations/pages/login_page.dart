@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:my_app/features/user_auth/presentations/pages/createAlbum.dart';
 import 'package:my_app/features/user_auth/presentations/pages/sign_up_page.dart';
 import 'package:my_app/features/user_auth/presentations/widgets/form_container_widget.dart';
-import 'package:my_app/helperFunctions/gallery_sync.dart';
 import '../../../../global/common/toast.dart';
 import '../../firebase_auth_implementation/firebase_auth_services.dart';
-
+import '../../../../helperFunctions/gallery_sync.dart';
 class LoginPage extends StatefulWidget{
   const LoginPage({super.key});
 

@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:my_app/features/user_auth/firebase_auth_implementation/firebase_auth_services.dart';
-import 'package:my_app/features/user_auth/presentations/pages/home_page.dart';
 import 'package:my_app/features/user_auth/presentations/pages/login_page.dart';
 import 'package:my_app/features/user_auth/presentations/widgets/form_container_widget.dart';
 
@@ -33,7 +33,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("SignUp"),
+        title: const Text("SignUp"),
       ),
       body: Center(
         child: Padding(
@@ -41,26 +41,26 @@ class _SignUpPageState extends State<SignUpPage> {
                   child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text("Sign Up",style: TextStyle(fontSize: 27, fontWeight: FontWeight.bold),),
-          SizedBox(height: 30,),
+          const Text("Sign Up",style: TextStyle(fontSize: 27, fontWeight: FontWeight.bold),),
+          const SizedBox(height: 30,),
           FormContainerWidget(
             controller: usernameController,
             hintText: "Username",
             isPasswordField: false,
           ),
-          SizedBox(height: 10,),
+          const SizedBox(height: 10,),
           FormContainerWidget(
             controller: emailController,
             hintText: "Email",
             isPasswordField: false,
           ),
-          SizedBox(height: 10,),
+          const SizedBox(height: 10,),
           FormContainerWidget(
             controller: passwordController,
             hintText: "Password",
             isPasswordField: true,
           ),
-          SizedBox(height: 30,),
+          const SizedBox(height: 30,),
        GestureDetector(
             onTap: (){
               signUp();
@@ -72,19 +72,19 @@ class _SignUpPageState extends State<SignUpPage> {
               color: Colors.blue,
               borderRadius: BorderRadius.circular(10),
             ),
-            child:Center( child: isSignUp ? CircularProgressIndicator(color:Colors.white,): Text("SignUp",style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),)
+            child:Center( child: isSignUp ? const CircularProgressIndicator(color:Colors.white,): const Text("SignUp",style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),)
           )
           ),
-          SizedBox(height: 20,),
+          const SizedBox(height: 20,),
           Row(mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("Already have an account?"),
-            SizedBox(width: 5,),
+            const Text("Already have an account?"),
+            const SizedBox(width: 5,),
             GestureDetector(
               onTap: (){
-                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> LoginPage()),(route)=>false);
+                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const LoginPage()),(route)=>false);
               },
-              child: Text("login", style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold ),)
+              child: const Text("login", style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold ),)
             )
           ],)
         ],
@@ -106,7 +106,12 @@ class _SignUpPageState extends State<SignUpPage> {
     });
     if (user != null){
         showToast(message: 'User is successfuly created');
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> HomePage()),(route)=>false);
+        final String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+      // Start the background service to upload photos
+        FlutterBackgroundService().invoke('startUpload', {
+          "userId": userId,
+        });
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>const LoginPage()),(route)=>false);
     }else{
        showToast(message:"Some error happend");
     }
