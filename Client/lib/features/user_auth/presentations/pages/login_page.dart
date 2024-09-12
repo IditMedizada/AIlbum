@@ -102,7 +102,7 @@ class LoginPageState extends State<LoginPage> {
     //   "nightlyPhotoUploadTask",
     //   frequency: Duration(minutes: 15), // Minimum allowed frequency
     // );
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const Albums()),(route)=>false);
+    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const Albums()),(route)=>false);
     }else{
      showToast(message:"Some error happend");
     }

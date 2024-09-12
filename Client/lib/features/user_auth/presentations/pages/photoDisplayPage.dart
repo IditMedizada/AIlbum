@@ -24,11 +24,8 @@ class PhotoDisplayPageState extends State<PhotoDisplayPage> {
   Future <void> loadPhotos() async {
 
     try {
-      // String? user = FirebaseAuth.instance.currentUser?.uid;
-      print(widget.albumId);
       final storage = FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
       Reference storageRef = storage.ref().child(widget.albumId);
-        // final storageRef = FirebaseStorage.instance.ref().child(widget.albumId); // Specify the path
 
         final ListResult result = await storageRef.listAll(); // Get all files in the path
 

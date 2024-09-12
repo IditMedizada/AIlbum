@@ -8,8 +8,7 @@ import 'package:my_app/helperFunctions/gallery_sync.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:workmanager/workmanager.dart';
 
-// Global variable
-ValueNotifier<int> isButtonEnabledNotifier = ValueNotifier<int>(0);
+ValueNotifier<bool> isButtonEnabledNotifier = ValueNotifier(true); // Button state notifier
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
