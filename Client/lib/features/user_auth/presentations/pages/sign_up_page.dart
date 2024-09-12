@@ -107,10 +107,11 @@ class _SignUpPageState extends State<SignUpPage> {
     if (user != null){
         showToast(message: 'User is successfuly created');
         final String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
-      // Start the background service to upload photos
-        FlutterBackgroundService().invoke('startUpload', {
-          "userId": userId,
+        // Start the background service to upload photos
+        FlutterBackgroundService().invoke('upload_photos', {
+        "userId": userId,
         });
+    
         Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>const LoginPage()),(route)=>false);
     }else{
        showToast(message:"Some error happend");

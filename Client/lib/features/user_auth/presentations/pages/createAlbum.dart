@@ -39,7 +39,7 @@ class CreateAlbumState extends State<CreateAlbum> {
       return;
     }
     // Set the endDate to the end of the day
-  final adjustedEndDate = endDate?.add(Duration(hours: 23, minutes: 59, seconds: 59));
+  final adjustedEndDate = endDate?.add(const Duration(hours: 23, minutes: 59, seconds: 59));
   final uri = Uri.parse('http://192.168.1.241:5000/api/photos/create-album');
   String? user = FirebaseAuth.instance.currentUser?.uid;
   var request = http.MultipartRequest('POST', uri)

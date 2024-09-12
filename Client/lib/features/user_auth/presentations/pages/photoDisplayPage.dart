@@ -1,6 +1,5 @@
 // ignore_for_file: avoid_print
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
@@ -26,7 +25,6 @@ class PhotoDisplayPageState extends State<PhotoDisplayPage> {
 
     try {
       // String? user = FirebaseAuth.instance.currentUser?.uid;
-      List<String> imageUrls = [];
       print(widget.albumId);
       final storage = FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
       Reference storageRef = storage.ref().child(widget.albumId);

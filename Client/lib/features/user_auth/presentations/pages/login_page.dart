@@ -1,19 +1,20 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:my_app/features/user_auth/presentations/pages/createAlbum.dart';
+import 'package:my_app/features/user_auth/presentations/pages/albums.dart';
 import 'package:my_app/features/user_auth/presentations/pages/sign_up_page.dart';
 import 'package:my_app/features/user_auth/presentations/widgets/form_container_widget.dart';
 import '../../../../global/common/toast.dart';
 import '../../firebase_auth_implementation/firebase_auth_services.dart';
-import '../../../../helperFunctions/gallery_sync.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 class LoginPage extends StatefulWidget{
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<LoginPage> createState() => LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class LoginPageState extends State<LoginPage> {
   bool isSigning = false;
   final FirebaseAuthService auth = FirebaseAuthService();
   TextEditingController emailController = TextEditingController();
@@ -38,7 +39,7 @@ class _LoginPageState extends State<LoginPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Text("Login",style: TextStyle(fontSize: 27, fontWeight: FontWeight.bold),),
-          SizedBox(height: 30,),
+          const SizedBox(height: 30,),
           FormContainerWidget(
             controller: emailController,
             hintText: "Email",
@@ -94,19 +95,29 @@ class _LoginPageState extends State<LoginPage> {
       isSigning = false;
     });
     if (user != null){
-        showToast(message: 'User is successfuly sign in');
-
+      showToast(message: 'User is successfuly sign in');
+      await saveUserId(user.uid);
     // await Workmanager().registerPeriodicTask(
     //   "nightlyPhotoUpload",
     //   "nightlyPhotoUploadTask",
     //   frequency: Duration(minutes: 15), // Minimum allowed frequency
     // );
-      
-  
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> GallerySync()),(route)=>false);
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const Albums()),(route)=>false);
     }else{
      showToast(message:"Some error happend");
     }
     
   }
+
+  // Save user ID
+Future<void> saveUserId(String userId) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('userId', userId);
+}
+
+// Retrieve user ID
+Future<String?> getUserId() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('userId');
+}
 }

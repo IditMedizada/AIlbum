@@ -57,6 +57,9 @@ dependencies:
   photo_view: ^0.15.0
   flutter_face_api_beta: ^0.0.121
   logging: ^1.2.0
+  intl: ^0.19.0
+  shared_preferences: ^2.3.2
+  provider: ^6.1.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,13 +1,15 @@
-import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:my_app/features/app/splash_screen/splash_screen.dart';
 import 'package:my_app/features/user_auth/presentations/pages/login_page.dart';
-import 'package:my_app/features/user_auth/presentations/pages/sign_up_page.dart';
 import 'package:my_app/helperFunctions/gallery_sync.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:workmanager/workmanager.dart';
 
+// Global variable
+ValueNotifier<int> isButtonEnabledNotifier = ValueNotifier<int>(0);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,17 +22,19 @@ Future<void> main() async {
     ),
   );
 
-  // await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
-  // await Workmanager().registerPeriodicTask(
-  //   "uniqueNightlyPhotoUploadTask",  // Use a unique task name
-  //   "nightlyPhotoUploadTask",
-  //   frequency: const Duration(minutes: 15), // Adjust frequency as needed
-  //   inputData: <String, dynamic>{
-  //     'user': FirebaseAuth.instance.currentUser?.uid,
-  //   },
-  // );
-  // await initializeService();
 
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+  await Workmanager().registerPeriodicTask(
+      "uniqueNightlyPhotoUploadTask",  // Unique task name
+      "nightlyPhotoUploadTask",
+      frequency: const Duration(minutes: 15), // Frequency for nightly task
+
+  );
+ 
+
+  if (await Permission.notification.request().isGranted) {
+    await initializeService();
+  }
   runApp(const MyApp());
 }
 
@@ -50,53 +54,70 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Future<void> initializeService() async {
-//   final service = FlutterBackgroundService();
+Future<void> initializeService() async {
+  final service = FlutterBackgroundService();
 
-//   await service.configure(
-//     androidConfiguration: AndroidConfiguration(
-//       onStart: onStart,
-//       autoStart: true,
-//       isForegroundMode: true,
-//       notificationChannelId: 'my_foreground',
-//       initialNotificationTitle: 'AWESOME SERVICE',
-//       initialNotificationContent: 'Initializing',
-//       foregroundServiceNotificationId: 888,
-//       foregroundServiceTypes: [AndroidForegroundType.location],
-//     ),
-//     iosConfiguration: IosConfiguration(
-//       onForeground: onStart,
-//       autoStart: true,
-//     ),
-//   );
+  await service.configure(
+    androidConfiguration: AndroidConfiguration(
+      onStart: onStart,
+      autoStart: true,
+      isForegroundMode: true, // Ensures the service starts in the foreground
+      notificationChannelId: 'my_foreground_channel',
+      initialNotificationTitle: 'Uploading Photos',
+      initialNotificationContent: 'Uploading photos in progress...',
+      foregroundServiceNotificationId: 888, // Unique notification ID
+    ),
+    iosConfiguration: IosConfiguration(
+      onForeground: onStart,
+      autoStart: true,
+    ),
+  );
 
-//   // Ensure the service starts
-//   service.startService();
-// }
+  // Start the background service
+  service.startService();
+}
 
-// void onStart(ServiceInstance service) {
-//   DartPluginRegistrant.ensureInitialized();
 
-//   if (service is AndroidServiceInstance) {
-//     service.on('startUpload').listen((event) {
-//       // Process the event and sync photos
-//       GallerySyncPage().syncPhotos();
-//     });
-//   }
-// }
+void onStart(ServiceInstance service) async {
+  // Initialize Firebase
+  await Firebase.initializeApp();
 
-// void callbackDispatcher() {
-//   Workmanager().executeTask((task, inputData) async {
-//     print("Callback Dispatcher invoked with task: $task and inputData: $inputData");
+  // Check if the service is running as a foreground service
+  if (service is AndroidServiceInstance) {
+    service.setAsForegroundService(); // This is the correct method for foreground services
 
-//     if (task == "nightlyPhotoUploadTask" && inputData != null) {
-//       String? userId = inputData['user'];
-//       if (userId != null) {
-//         // Ensure this operation does not require any UI context
-//         await GallerySyncPage().uploadNewPhotos(userId);
-//         print("Photos uploaded for user: $userId");
-//       }
-//     }
-//     return Future.value(true);
-//   });
-// }
+    service.setForegroundNotificationInfo(
+      title: "Uploading Photos",
+      content: "Uploading photos in the background.",
+    );
+  }
+
+  // Listen for events
+  service.on('upload_photos').listen((event) async {
+    final userId = event!["userId"];
+    if (userId != null) {
+      await GallerySync().syncPhotos(userId);
+      service.invoke('sync_complete', {"sync_complete": true});
+      print("Sync complete event sent to UI");
+    }
+  });
+}
+
+
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    print("Callback Dispatcher invoked with task: $task and inputData: $inputData");
+
+    if (task == "nightlyPhotoUploadTask" && inputData != null) {
+      final userId = await LoginPageState().getUserId();
+      if (userId != null) {
+        await GallerySync().syncPhotos(userId);
+        print("Photos uploaded for user: $userId");
+      } else {
+        print("User ID not found in input data");
+      }
+    }
+    return Future.value(true);
+  });
+
+}

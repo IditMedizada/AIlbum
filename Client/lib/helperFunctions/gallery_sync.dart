@@ -3,31 +3,30 @@
 import 'dart:convert';
 
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
-import 'package:my_app/features/user_auth/presentations/pages/createAlbum.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class GallerySync extends StatefulWidget {
-  const GallerySync({super.key});
 
-  @override
-  GallerySyncPage createState() => GallerySyncPage();
-}
 
-class GallerySyncPage extends State<GallerySync> {
-  List<File> photoUrls = []; // List to track URLs of uploaded photos
+class GallerySync{
+//   const GallerySync({super.key});
 
-  @override
-  void initState() {
-    super.initState();
-    syncPhotos();
-  }
+//   @override
+//   GallerySyncPage createState() => GallerySyncPage();
+// }
 
-  Future<void> syncPhotos() async {
+// class GallerySyncPage extends State<GallerySync> {
+  List<File> photoUrls = [];
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   syncPhotos();
+  // }
 
+  Future<void> syncPhotos(String user) async {
     // Retrieve all image albums
     final albums = await PhotoManager.getAssetPathList(
       type: RequestType.image,
@@ -50,7 +49,7 @@ class GallerySyncPage extends State<GallerySync> {
     const pageSize = 10; // Adjust page size as needed
 
     while (true) {
-      String? user = FirebaseAuth.instance.currentUser?.uid;
+      // String? user = FirebaseAuth.instance.currentUser?.uid;
       final photos = await mainAlbum.getAssetListRange(start: start, end: start + pageSize);
       if (photos.isEmpty){
          final uri = Uri.parse('http://192.168.1.241:5000/api/photos/process-photos');
@@ -62,7 +61,11 @@ class GallerySyncPage extends State<GallerySync> {
               );              
               if (response.statusCode == 200) {
                 print("Server notified of new uploads " +(response.body));
-                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const CreateAlbum()),(route)=>false);
+                // Notify UI about the successful sync completion
+                FlutterBackgroundService().invoke('sync_complete', {"sync_complete": true});
+                print("Data sent to UI: sync_complete=true");
+
+                // Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const CreateAlbum()),(route)=>false);
                 break;
 
               } else {
@@ -73,17 +76,17 @@ class GallerySyncPage extends State<GallerySync> {
 
       for (final photo in photos) {
         final file = await photo.file;
-        if (file != null && user != null) {
+        if (file != null) {
 
           if (!photoUrls.any((url) => url == file.path)) { // Avoid duplicates
-            bool isUploaded = await uploadUserPhoto(photo.title,user, file, photo.createDateTime.toIso8601String());
-            if (isUploaded) {
-              setState(() {
-                photoUrls.add(file); // Add the file to the list
-              });
+            await uploadUserPhoto(photo.title,user, file, photo.createDateTime.toIso8601String());
+            // if (isUploaded) {
+            //   setState(() {
+            //     photoUrls.add(file); // Add the file to the list
+            //   });
              
 
-            }
+            // }
           }
         }
       }
@@ -136,10 +139,10 @@ class GallerySyncPage extends State<GallerySync> {
             if(!isExist){
               bool isUploaded = await uploadUserPhoto(photo.title,user, file, photo.createDateTime.toIso8601String());
               if (isUploaded) {
-                setState(() {
-                  photoUrls.add(file); // Add the file to the list
-                  //add notification to server
-                });
+                // setState(() {
+                //   photoUrls.add(file); // Add the file to the list
+                //   //add notification to server
+                // });
               
 
               }
@@ -271,35 +274,35 @@ class GallerySyncPage extends State<GallerySync> {
 
 
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Photo Album Sync'),
-      ),
-      body: Column(
-        children: [
-          const Center(
-            child: Text('Syncing Photos...'),
-          ),
-          Expanded(
-            child: photoUrls.isEmpty
-                ? const Center(child: Text('No photos uploaded yet.'))
-                : GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 4.0,
-                      mainAxisSpacing: 4.0,
-                    ),
-                    itemCount: photoUrls.length,
-                    itemBuilder: (context, index) {
-                      return Image.file(photoUrls[index]); // Display image from URL
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     appBar: AppBar(
+  //       title: const Text('Photo Album Sync'),
+  //     ),
+  //     body: Column(
+  //       children: [
+  //         const Center(
+  //           child: Text('Syncing Photos...'),
+  //         ),
+  //         Expanded(
+  //           child: photoUrls.isEmpty
+  //               ? const Center(child: Text('No photos uploaded yet.'))
+  //               : GridView.builder(
+  //                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //                     crossAxisCount: 3,
+  //                     crossAxisSpacing: 4.0,
+  //                     mainAxisSpacing: 4.0,
+  //                   ),
+  //                   itemCount: photoUrls.length,
+  //                   itemBuilder: (context, index) {
+  //                     return Image.file(photoUrls[index]); // Display image from URL
+  //                   },
+  //                 ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
 }
