@@ -96,7 +96,11 @@ class LoginPageState extends State<LoginPage> {
     });
     if (user != null){
       showToast(message: 'User is successfuly sign in');
-      await saveUserId(user.uid);
+      String? userId = FirebaseAuth.instance.currentUser?.uid;
+      if(userId != null ){ 
+        await saveUserId(userId);
+      }
+     
     // await Workmanager().registerPeriodicTask(
     //   "nightlyPhotoUpload",
     //   "nightlyPhotoUploadTask",

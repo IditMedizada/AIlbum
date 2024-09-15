@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:my_app/features/user_auth/presentations/pages/createAlbum.dart';
 import 'package:my_app/features/user_auth/presentations/widgets/albumItem.dart';
+import 'package:my_app/features/user_auth/presentations/widgets/photoItem.dart';
 import 'package:my_app/main.dart';
 
 class Albums extends StatefulWidget {
@@ -17,6 +18,7 @@ class AlbumState extends State<Albums> {
   final FirebaseStorage storage =
       FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
   List<Map<String, dynamic>> albumData = [];
+  List<String> photoUrls = []; // List to hold photo URLs
 
   @override
   void initState() {
@@ -29,100 +31,155 @@ class AlbumState extends State<Albums> {
         print("Button enabled after sync completed");
       }
     });
+
+    
+
+    // Fetch albums and photos
     fetchAlbums();
-
+    fetchPhotos(); // Fetch photos after fetching albums
   }
+
+  // Fetch albums from Firebase Storage
   Future<void> fetchAlbums() async {
-      String? userId = FirebaseAuth.instance.currentUser?.uid;
-      String albumsPath = '$userId/user_albums/'; // Define the path
+    String? userId = FirebaseAuth.instance.currentUser?.uid;
+    String albumsPath = '$userId/user_albums/'; // Define the path
 
-      // Get the albums (folders) under the user's albums folder
-      final ListResult albums = await storage.ref(albumsPath).listAll();
+    // Get the albums (folders) under the user's albums folder
+    final ListResult albums = await storage.ref(albumsPath).listAll();
 
-      List<Map<String, dynamic>> tempAlbumData = [];
+    List<Map<String, dynamic>> tempAlbumData = [];
 
-      // Loop through each folder (album)
-      for (var albumRef in albums.prefixes) {
-        // String albumName = albumRef.name;
-        String albumName = "hi!";
-        String thumbnailUrl = '';
+    // Loop through each folder (album)
+    for (var albumRef in albums.prefixes) {
+      String albumName = albumRef.name;
+      String thumbnailUrl = '';
 
-        // Fetch one image from the album to use as a thumbnail (first image in the folder)
-        final ListResult photos = await albumRef.listAll();
-        if (photos.items.isNotEmpty) {
-          thumbnailUrl = await photos.items.first.getDownloadURL();
-        }
+      // Fetch one image from the album to use as a thumbnail (first image in the folder)
+      final ListResult photos = await albumRef.listAll();
+      if (photos.items.isNotEmpty) {
+        thumbnailUrl = await photos.items.first.getDownloadURL();
+      }
 
-        // Add album data
-        tempAlbumData.add({
-          'albumName': albumName,
-          'thumbnailUrl': thumbnailUrl,
-        });
+      // Add album data
+      tempAlbumData.add({
+        'albumName': albumName,
+        'thumbnailUrl': thumbnailUrl,
+      });
+    }
+
+    setState(() {
+      albumData = tempAlbumData; // Update the state with the album data
+    });
+  }
+
+  // Fetch all photos from Firebase Storage
+  Future<void> fetchPhotos() async {
+    String? userId = FirebaseAuth.instance.currentUser?.uid;
+    String photosPath = '$userId/user_photos/'; // Define the path to photos
+
+    
+    // Get all photos from the photos folder
+      final ListResult photos = await storage.ref(photosPath).listAll();
+
+      List<String> tempPhotoUrls = [];
+
+      for (var photoRef in photos.items) {
+        // Fetch the download URL for each photo
+        String photoUrl = await photoRef.getDownloadURL();
+        tempPhotoUrls.add(photoUrl); // Add URL to list
       }
 
       setState(() {
-        albumData = tempAlbumData; // Update the state with the album data
+        photoUrls = tempPhotoUrls; // Update the state with photo URLs
       });
-    }
-  @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: const Text("Your Albums"),
-    ),
-    body: Column(
-      children: [
-        // Button for creating a new album
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ValueListenableBuilder<bool>(
-            valueListenable: isButtonEnabledNotifier,
-            builder: (context, isButtonEnabled, child) {
-              return ElevatedButton(
-                onPressed: isButtonEnabled
-                    ? () {
-                        // Navigate to CreateAlbum after the button is enabled
-                        print("Navigating to Create Album page");
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const CreateAlbum()),
-                          (route) => false,
-                        );
-                      }
-                    : null, // Disable button if isButtonEnabled is false
-                child: const Text('Create New Album'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isButtonEnabled ? Colors.blue : Colors.grey,
-                ),
-              );
-            },
-          ),
-        ),
+       
+   
+  }
 
-        // Display albums in a grid view
-        Expanded(
-          child: albumData.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : GridView.builder(
-                  padding: const EdgeInsets.all(8),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Your Albums"),
+      ),
+      body: Column(
+        children: [
+          // Button for creating a new album
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ValueListenableBuilder<bool>(
+              valueListenable: isButtonEnabledNotifier,
+              builder: (context, isButtonEnabled, child) {
+                return ElevatedButton(
+                  onPressed: isButtonEnabled
+                      ? () {
+                          // Navigate to CreateAlbum after the button is enabled
+                          print("Navigating to Create Album page");
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const CreateAlbum()),
+                            (route) => false,
+                          );
+                        }
+                      : null, // Disable button if isButtonEnabled is false
+                  child: const Text('Create New Album'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        isButtonEnabled ? Colors.blue : Colors.grey,
                   ),
-                  itemCount: albumData.length,
-                  itemBuilder: (context, index) {
-                    final album = albumData[index];
-                    return AlbumItem(
-                      albumName: album['albumName'],
-                      thumbnailUrl: album['thumbnailUrl'],
-                    );
-                  },
-                ),
-        ),
-      ],
-    ),
-  );
-}
+                );
+              },
+            ),
+          ),
+
+          // Display albums in a grid view
+          Expanded(
+            child: albumData.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : GridView.builder(
+                    padding: const EdgeInsets.all(8),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemCount: albumData.length,
+                    itemBuilder: (context, index) {
+                      final album = albumData[index];
+                      return AlbumItem(
+                        albumName: album['albumName'],
+                        thumbnailUrl: album['thumbnailUrl'],
+                      );
+                    },
+                  ),
+          ),
+
+          const Divider(), // Separator between albums and photos
+
+          // Display all photos in a grid view
+          Expanded(
+            child: photoUrls.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : GridView.builder(
+                    padding: const EdgeInsets.all(8),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemCount: photoUrls.length,
+                    itemBuilder: (context, index) {
+                      return PhotoItem(
+                        imageUrl: photoUrls[index],
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -97,7 +97,7 @@ void onStart(ServiceInstance service) async {
     if (userId != null) {
       await GallerySync().syncPhotos(userId);
       service.invoke('sync_complete', {"sync_complete": true});
-      print("Sync complete event sent to UI");
+      service.stopSelf();
     }
   });
 }
