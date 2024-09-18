@@ -2,6 +2,7 @@
 
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:my_app/features/user_auth/presentations/pages/albums.dart';
 
 class PhotoDisplayPage extends StatefulWidget {
   final String albumId;
@@ -46,6 +47,12 @@ class PhotoDisplayPageState extends State<PhotoDisplayPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+            leading: IconButton(
+    icon: const Icon(Icons.arrow_back),
+    onPressed: () {
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const Albums()),(route)=>false);
+    },
+  ),
         title: const Text('Album Photos'),
       ),
       body: photoUrls.isEmpty

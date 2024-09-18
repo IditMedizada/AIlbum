@@ -33,12 +33,12 @@ class AlbumItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Album Thumbnail with larger size
-            Container(
-              height: 150, // Increase the height to make the image larger
+            AspectRatio(
+              aspectRatio: 16 / 9, // Aspect ratio of the thumbnail
               child: thumbnailUrl.isNotEmpty
                   ? Image.network(
                       thumbnailUrl,
-                      fit: BoxFit.contain, // Ensure the image is not cropped
+                      fit: BoxFit.cover, // Cover the area without distortion
                     )
                   : Container(
                       color: Colors.grey[200],

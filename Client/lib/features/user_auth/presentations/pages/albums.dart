@@ -100,7 +100,13 @@ class AlbumState extends State<Albums> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Your Albums"),
+        leading: const Padding(
+        padding: EdgeInsets.all(5.0),
+        child: Image(
+                          image: AssetImage('assets/icon.png'),
+                          width: 100.0,  // Adjust the size as needed
+                          height: 100.0,
+        ),),
       ),
       body: Column(
         children: [

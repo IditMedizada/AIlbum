@@ -32,17 +32,31 @@ class _SignUpPageState extends State<SignUpPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("SignUp"),
+  return Scaffold(
+    body: Container(
+      // Set the background image here
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+                image: AssetImage('assets/backgroud.jpg'), 
+          fit: BoxFit.cover, 
+        ),
       ),
-      body: Center(
+      child: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15),
-                  child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text("Sign Up",style: TextStyle(fontSize: 27, fontWeight: FontWeight.bold),),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Icon in the center
+              const Center(
+                child: Image(
+                  image: AssetImage('assets/icon.png'),
+                  width: 150.0,  // Adjust the size as needed
+                  height: 150.0,
+                ),
+              ),
+              const SizedBox(height: 50,), // Adjust the height for padding
+          const Text("Create your account",style: TextStyle(fontSize: 27, fontWeight: FontWeight.bold),),
           const SizedBox(height: 30,),
           FormContainerWidget(
             controller: usernameController,
@@ -91,8 +105,9 @@ class _SignUpPageState extends State<SignUpPage> {
         ],
       ),
         )
-
+      )
     ));
+  
   }
 
   void signUp() async{

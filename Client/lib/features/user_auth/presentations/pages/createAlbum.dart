@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:my_app/features/user_auth/presentations/pages/albums.dart';
 import 'dart:io';
 
 import 'package:my_app/features/user_auth/presentations/pages/photoDisplayPage.dart';
@@ -97,8 +98,13 @@ class CreateAlbumState extends State<CreateAlbum> {
 Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
-      title: const Text('Create Album'),
-    ),
+    leading: IconButton(
+    icon: const Icon(Icons.arrow_back),
+    onPressed: () {
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const Albums()),(route)=>false);
+    },
+  ),
+  title: const Text('Create Album'),    ),
     body: SingleChildScrollView( // Make the entire body scrollable
       child: Padding(
         padding: const EdgeInsets.all(16.0),
