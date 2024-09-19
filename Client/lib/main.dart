@@ -1,9 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:my_app/features/app/splash_screen/splash_screen.dart';
 import 'package:my_app/features/user_auth/presentations/pages/login_page.dart';
+import 'package:my_app/helperFunctions/gallery_sync.dart';
+import 'package:workmanager/workmanager.dart';
 
 Future main() async {
+ 
   WidgetsFlutterBinding.ensureInitialized();
     await Firebase.initializeApp(
       options: FirebaseOptions(
@@ -12,10 +16,23 @@ Future main() async {
           messagingSenderId: "808160337385",
           projectId: "ailbum",
           ),);
-
+ Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+  print("init night mode");
   runApp(MyApp());
 }
+void callbackDispatcher() {
+  print("hlooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
+  Workmanager().executeTask((task, inputData) async {
+    // Retrieve the current user
+    String? user = FirebaseAuth.instance.currentUser?.uid;
+    if (user != null) {
+      // Call the function to upload new photos
+      await GallerySyncPage().uploadNewPhotos(user);
+    }
 
+    return Future.value(true);
+  });
+  }
 class MyApp extends StatelessWidget {
 
   // This widget is the root of your application.
