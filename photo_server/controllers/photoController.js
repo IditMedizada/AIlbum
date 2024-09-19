@@ -28,30 +28,29 @@ class PhotoController {
 
             await FaceService.loadModels();
 
-            // Retrieve processed photos
-            // const processedPhotos = await getProcessedPhotosForUser(user); // Implement this function as needed
-
-            // // Filter out already processed photos
-            // const newFiles = files.filter(file => !processedPhotos.includes(file.name));
-
-            // console.log(`Processing ${newFiles.length} new files.`);
-
             for (const file of files) {
-                console.log("Processing file:", file.name);
                 const filePath = file.name;
+
+                // Check if the photo has already been processed
+                if ( FirebaseService.isPhotoProcessed(filePath)) {
+                    console.log(`Skipping already processed file: ${filePath}`);
+                    continue;
+                }
+
+                console.log("Processing file:", filePath);
                 const tempFilePath = await FirebaseService.downloadImage(filePath); // Download the image to a temp path
                 const imageBuffer = fs.readFileSync(tempFilePath); // Read the image from the temp path
 
                 // Load the image using node-canvas
                 const img = await canvas.loadImage(imageBuffer);
 
-                const faceIds = await FaceService.processFaces(img);
+                const faceIds = await FaceService.processFaces(img,filePath);
                 await FirebaseService.updatePhotoMetadata(filePath, faceIds);
 
                 FirebaseService.cleanUp(tempFilePath); // Clean up the temp file
             }
 
-            res.status(200).json({ message: 'New photos processed successfully.' });
+            res.status(200).json({ message: 'Photos processed successfully.' });
         } catch (error) {
             console.error("Error processing photos:", error);
             res.status(500).json({ message: 'An error occurred while processing photos.', error: error.message });
