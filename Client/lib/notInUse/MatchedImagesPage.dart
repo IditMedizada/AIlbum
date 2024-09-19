@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 class MatchedImagesPage extends StatelessWidget {
   final List<Uint8List?> assetBytesListMatch;
 
-  MatchedImagesPage({required this.assetBytesListMatch});
+  const MatchedImagesPage({super.key, required this.assetBytesListMatch});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Matched Images'),
+        title: const Text('Matched Images'),
       ),
       body: ListView.builder(
         itemCount: assetBytesListMatch.length,

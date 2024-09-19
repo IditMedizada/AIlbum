@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:flutter_face_api_beta/flutter_face_api.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:my_app/features/user_auth/presentations/pages/MatchedImagesPage.dart';
+import 'package:my_app/notInUse/MatchedImagesPage.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 
@@ -94,7 +94,7 @@ class Faces extends State<Face_rec> {
     var match = split.matchedFaces;
     similarityStatus = "failed";
     if (match.isNotEmpty) {
-      similarityStatus = (match[0].similarity * 100).toStringAsFixed(2) + "%";
+      similarityStatus = "${(match[0].similarity * 100).toStringAsFixed(2)}%";
       setState(() {
         assetBytesListMatch.add(mfImage2.image);
 
@@ -118,7 +118,7 @@ class Faces extends State<Face_rec> {
   Future<bool> initialize() async {
     status = "Initializing...";
     var license = await loadAssetIfExists("assets/regula.license");
-    InitConfig? config = null;
+    InitConfig? config;
     if (license != null) config = InitConfig(license);
     var (success, error) = await faceSdk.initialize(config: config);
     if (!success) {
@@ -177,27 +177,27 @@ class Faces extends State<Face_rec> {
       );
 
   Widget button(String text, Function() onPressed) {
-    return Container(
+    return SizedBox(
+      width: 250,
       child: textButton(text, onPressed,
           style: ButtonStyle(
             backgroundColor: WidgetStateProperty.all<Color>(Colors.black12),
           )),
-      width: 250,
     );
   }
 
-  Widget text(String text) => Text(text, style: TextStyle(fontSize: 18));
+  Widget text(String text) => Text(text, style: const TextStyle(fontSize: 18));
   Widget textButton(String text, Function() onPressed, {ButtonStyle? style}) =>
       TextButton(
-        child: Text(text),
         onPressed: onPressed,
         style: style,
+        child: Text(text),
       );
 
   setImageDialog(BuildContext context, int number) => showDialog(
         context: context,
         builder: (BuildContext context) => AlertDialog(
-          title: Text("Select option"),
+          title: const Text("Select option"),
           actions: [useGallery(), useCamera()],
         ),
       );
@@ -213,16 +213,16 @@ class Faces extends State<Face_rec> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             image(_uiImage1, () => setImageDialog(bc, 1)),
-            Container(margin: EdgeInsets.fromLTRB(0, 0, 0, 15)),
+            Container(margin: const EdgeInsets.fromLTRB(0, 0, 0, 15)),
             button("Match", () => matchAssets()),
             button("Clear", () => clearResults()),
-            Container(margin: EdgeInsets.fromLTRB(0, 15, 0, 0)),
+            Container(margin: const EdgeInsets.fromLTRB(0, 15, 0, 0)),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                text("Similarity: " + _similarityStatus),
-                Container(margin: EdgeInsets.fromLTRB(20, 0, 0, 0)),
-                text("Liveness: " + _livenessStatus)
+                text("Similarity: $_similarityStatus"),
+                Container(margin: const EdgeInsets.fromLTRB(20, 0, 0, 0)),
+                text("Liveness: $_livenessStatus")
               ],
             )
           ],
@@ -243,7 +243,7 @@ class Faces extends State<Face_rec> {
 class Face_rec extends StatefulWidget {
   final List<AssetEntity> assets;
 
-  Face_rec({required this.assets});
+  const Face_rec({super.key, required this.assets});
 
   @override
   Faces createState() => Faces();

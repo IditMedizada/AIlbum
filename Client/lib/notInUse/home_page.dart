@@ -1,12 +1,17 @@
+// ignore_for_file: avoid_print
+
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:my_app/features/user_auth/presentations/pages/faces.dart';
+import 'package:my_app/notInUse/faces.dart';
 import 'dart:async';
 import 'package:photo_manager/photo_manager.dart';
 
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _HomePageState createState() => _HomePageState();
 }
 
@@ -81,7 +86,7 @@ class _HomePageState extends State<HomePage> {
           title: const Text('All Gallery Images'),
           actions: [
             IconButton(
-              icon: Icon(Icons.date_range),
+              icon: const Icon(Icons.date_range),
               onPressed: () {
                 selectDateRange(context);
                 
