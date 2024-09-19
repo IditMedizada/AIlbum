@@ -87,12 +87,11 @@ class AlbumState extends State<Albums> {
         // Fetch the download URL for each photo
         String photoUrl = await photoRef.getDownloadURL();
         tempPhotoUrls.add(photoUrl); // Add URL to list
-      }
 
-      setState(() {
-        photoUrls = tempPhotoUrls; // Update the state with photo URLs
-      });
-       
+        setState(() {
+          photoUrls = tempPhotoUrls; // Update the state with photo URLs
+        });
+      }   
    
   }
 

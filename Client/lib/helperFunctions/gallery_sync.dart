@@ -241,7 +241,6 @@ class GallerySync{
     UploadTask uploadTask = ref.putFile(photo, SettableMetadata(
       customMetadata: {'photoDate': date},
     ));
-
     await uploadTask.whenComplete(() => print("Upload complete"));
 
     return true; // Return true if upload completes successfully
