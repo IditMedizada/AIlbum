@@ -3,7 +3,6 @@
 import 'dart:convert';
 
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
@@ -52,7 +51,7 @@ class GallerySync{
     await Future.wait(uploadTasks);
 
     // Notify the server after all photos are uploaded
-    final uri = Uri.parse('http://192.168.1.241:5000/api/photos/process-photos');
+    final uri = Uri.parse('http://192.168.1.36:5000/api/photos/process-photos');
     await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'user': user}));
 
     print("All photos uploaded and server notified.");

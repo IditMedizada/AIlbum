@@ -6,6 +6,7 @@ import 'package:my_app/features/user_auth/presentations/pages/createAlbum.dart';
 import 'package:my_app/features/user_auth/presentations/widgets/albumItem.dart';
 import 'package:my_app/features/user_auth/presentations/widgets/photoItem.dart';
 import 'package:my_app/main.dart';
+import 'package:my_app/features/user_auth/presentations/pages/login_page.dart';
 
 class Albums extends StatefulWidget {
   const Albums({super.key});
@@ -52,6 +53,12 @@ class AlbumState extends State<Albums> {
     // Loop through each folder (album)
     for (var albumRef in albums.prefixes) {
       String albumName = albumRef.name;
+      if (albumName.contains('#')) {
+        // Extract substring after the '#'
+        albumName = albumName.split('#').last;
+      } else {
+        albumName = albumRef.name; // Default to the regular name if no '#' is found
+      }
       String thumbnailUrl = '';
 
       // Fetch one image from the album to use as a thumbnail (first image in the folder)
@@ -106,6 +113,23 @@ class AlbumState extends State<Albums> {
                           width: 100.0,  // Adjust the size as needed
                           height: 100.0,
         ),),
+         // Add the logout icon button to the right side of the AppBar
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout), // Logout icon
+            onPressed: () async {
+              // Sign out from Firebase
+              await FirebaseAuth.instance.signOut();
+
+              // Navigate to the sign-in page after signing out
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()), // SignIn is your login page
+                (route) => false, // Remove all routes from the stack
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
