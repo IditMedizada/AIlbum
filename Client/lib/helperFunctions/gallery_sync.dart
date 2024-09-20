@@ -12,92 +12,54 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 
 class GallerySync{
-//   const GallerySync({super.key});
 
-//   @override
-//   GallerySyncPage createState() => GallerySyncPage();
-// }
-
-// class GallerySyncPage extends State<GallerySync> {
   List<File> photoUrls = [];
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   syncPhotos();
-  // }
 
   Future<void> syncPhotos(String user) async {
-    // Retrieve all image albums
-    final albums = await PhotoManager.getAssetPathList(
-      type: RequestType.image,
-    );
+  final albums = await PhotoManager.getAssetPathList(type: RequestType.image);
+  AssetPathEntity? mainAlbum;
 
-    // Find the main album (or the first album with photos)
-    AssetPathEntity? mainAlbum;
-    for (final album in albums) {
-      // Try to get some photos from the album to check if it contains any photos
-      final photos = await album.getAssetListRange(start: 0, end: 1);
-      if (photos.isNotEmpty && album.name == "test") {
-        mainAlbum = album;
-        break;
-      }
-
+  // Finding the album
+  for (final album in albums) {
+    final photos = await album.getAssetListRange(start: 0, end: 1);
+    if (photos.isNotEmpty && album.name == "test") {
+      mainAlbum = album;
+      break;
     }
+  }
 
-    if (mainAlbum != null) {
+  if (mainAlbum != null) {
     int start = 0;
-    const pageSize = 10; // Adjust page size as needed
+    const pageSize = 10;
+    
+    List<Future> uploadTasks = []; // A list to hold the upload tasks
 
     while (true) {
-      // String? user = FirebaseAuth.instance.currentUser?.uid;
       final photos = await mainAlbum.getAssetListRange(start: start, end: start + pageSize);
-      if (photos.isEmpty){
-         final uri = Uri.parse('http://192.168.1.241:5000/api/photos/process-photos');
-              print("user: $user");
-              final response = await http.post(
-                uri,
-                headers: {'Content-Type': 'application/json'},  // Set the content type to JSON
-                body: jsonEncode({'user': user}),  // Encode the body as JSON
-              );              
-              if (response.statusCode == 200) {
-                print("Server notified of new uploads " +(response.body));
-                // Notify UI about the successful sync completion
-                FlutterBackgroundService().invoke('sync_complete', {"sync_complete": true});
-                print("Data sent to UI: sync_complete=true");
-
-                // Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const CreateAlbum()),(route)=>false);
-                break;
-
-              } else {
-                print("Failed to notify server");
-              }
-
-      } 
+      if (photos.isEmpty) break;
 
       for (final photo in photos) {
         final file = await photo.file;
-        if (file != null) {
-
-          if (!photoUrls.any((url) => url == file.path)) { // Avoid duplicates
-            await uploadUserPhoto(photo.title,user, file, photo.createDateTime.toIso8601String());
-            // if (isUploaded) {
-            //   setState(() {
-            //     photoUrls.add(file); // Add the file to the list
-            //   });
-             
-
-            // }
-          }
+        if (file != null && !photoUrls.any((url) => url == file.path)) {
+          uploadTasks.add(uploadUserPhoto(photo.title, user, file, photo.createDateTime.toIso8601String()));
         }
       }
 
       start += pageSize;
     }
+
+    // Wait for all uploads to complete in parallel
+    await Future.wait(uploadTasks);
+
+    // Notify the server after all photos are uploaded
+    final uri = Uri.parse('http://192.168.1.241:5000/api/photos/process-photos');
+    await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'user': user}));
+
+    print("All photos uploaded and server notified.");
   } else {
     print("Main album not found");
   }
   }
-
 
  
 
@@ -158,53 +120,10 @@ class GallerySync{
       print("Main album not found");
     }
 
-      // bool isUploaded = false;
-      // final directory = await getExternalStorageDirectory();
-      // final picturesDir = Directory('${directory?.path}/Pictures');
-      // print("hii i am here!");
-      // if (picturesDir.existsSync()) {
-      //   final List<FileSystemEntity> files = picturesDir.listSync(recursive: true);
-      //   for (FileSystemEntity file in files) {
-      //     if (file is File) {
-      //       // Check if the file is a photo by its extension
-      //       if (isPhoto(file)) {
-      //         // Check if this photo is already uploaded
-      //         if (!await isPhotoUploaded(file, user)) {
-      //           // Upload the new photo to Firebase Storage
-      //           isUploaded = await uploadPhoto(file, user);
-      //           if(isUploaded){
-      //              setState(() {
-      //               photoUrls.add(file); // Add the file to the list
-      //             });
-      //           }
-      //         }
-      //       }
-      //     }
-      //   }
-      //   if(isUploaded){
-      //          final uri = Uri.parse('http://192.168.243.147:5000/api/photos/process-photos');
-      //         print("user: $user");
-      //         final response = await http.post(
-      //           uri,
-      //           headers: {'Content-Type': 'application/json'},  // Set the content type to JSON
-      //           body: jsonEncode({'user': user}),  // Encode the body as JSON
-      //         );              
-      //         print(response.statusCode);
-      //         if (response.statusCode == 200) {
-      //           print("Server notified of new uploads " +(response.body));
-      //         } else {
-      //           print("Failed to notify server");
-      //         }
-      //   }
-      // } else {
-      //   print("Pictures directory not found!");
-      // }
+      
     }
 
-  // bool isPhoto(File file) {
-  //   final String extension = file.path.split('.').last.toLowerCase();
-  //   return ['jpg', 'jpeg', 'png', 'gif'].contains(extension);
-  // }
+ 
 
   Future<bool> isPhotoUploaded(File file, String user ) async {
       try {
@@ -223,16 +142,7 @@ class GallerySync{
     //   try {
     //     final storage = FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
 
-    //     final ref = storage.ref().child('$user/user_photos/$file.jpg');
-    //     await ref.putFile(file);
-    //     print("Uploaded: ${file.path}");
-    //     return true;
-    //   } catch (e) {
-    //     print("Failed to upload ${file.path}: $e");
-    //     return false;
-    //   }
-    // }
-
+   
     Future<bool> uploadUserPhoto(String? fileName, String? user, File photo, String date) async {
   try {
     final storage = FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
@@ -250,58 +160,6 @@ class GallerySync{
   }
 }
 
-  // Future<String?> uploadUserPhoto(String user, File image, String date) async {
-  //   final uri = Uri.parse('http://192.168.1.253:5000/api/photos');
-  //   final request = http.MultipartRequest('POST', uri)
-  //     ..fields['date'] = date
-  //     ..fields['user'] = user
-  //     ..files.add(await http.MultipartFile.fromPath('photo', image.path));
-  //   final response = await request.send();
-  //   if (response.statusCode == 200) {
-  //     final responseBody = await response.stream.bytesToString();
-  //     // Assuming the server response contains the URL as plain text
-  //     print("Upload Success, URL: $responseBody");
-  //     return responseBody; // Return the URL
-  //   } else {
-  //     print("Failed to upload photo");
-  //     return null;
-  //   }
-  // }
-
-
-
-
-
-
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     appBar: AppBar(
-  //       title: const Text('Photo Album Sync'),
-  //     ),
-  //     body: Column(
-  //       children: [
-  //         const Center(
-  //           child: Text('Syncing Photos...'),
-  //         ),
-  //         Expanded(
-  //           child: photoUrls.isEmpty
-  //               ? const Center(child: Text('No photos uploaded yet.'))
-  //               : GridView.builder(
-  //                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-  //                     crossAxisCount: 3,
-  //                     crossAxisSpacing: 4.0,
-  //                     mainAxisSpacing: 4.0,
-  //                   ),
-  //                   itemCount: photoUrls.length,
-  //                   itemBuilder: (context, index) {
-  //                     return Image.file(photoUrls[index]); // Display image from URL
-  //                   },
-  //                 ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
+ 
 
 }
