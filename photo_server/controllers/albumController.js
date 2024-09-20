@@ -13,7 +13,7 @@ faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 class AlbumController {
     static async createAlbum(req, res) {
         try {
-            const { user, startDate, endDate, numPhotos } = req.body;
+            const { user, startDate, endDate, numPhotos , albumName } = req.body;
             const files = req.files; // Files array from the request
 
             if (!user || !Array.isArray(files) || !startDate || !endDate || !numPhotos || isNaN(numPhotos)) {
@@ -30,7 +30,7 @@ class AlbumController {
             const filteredPhotos = await PhotoService.getFilteredPhotos(user, startDate, endDate, faceIds);
 
             // Create the album with up to 'numPhotos' photos
-            const albumPath = await PhotoService.createAlbum(user, filteredPhotos, parseInt(numPhotos, 10));
+            const albumPath = await PhotoService.createAlbum(user, filteredPhotos, parseInt(numPhotos, 10),albumName);
             console.log("done! ",albumPath);
             return res.status(200).json({ message: 'Album created successfully', albumPath });
         } catch (error) {

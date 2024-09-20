@@ -97,8 +97,8 @@ class PhotoService {
     }
 
     // Create album in Firebase
-    static async createAlbum(user, photos, numPhotos) {
-        const albumPath = `${user}/user_albums/${uuidv4()}`;
+    static async createAlbum(user, photos, numPhotos , albumName) {
+        const albumPath = `${user}/user_albums/${uuidv4()}#${albumName}`;
         const album = photos.slice(0, numPhotos);
 
         const promises = album.map(photo => 
