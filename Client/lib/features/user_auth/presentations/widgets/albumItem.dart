@@ -5,9 +5,10 @@ import 'package:my_app/features/user_auth/presentations/pages/photoDisplayPage.d
 class AlbumItem extends StatelessWidget {
   final String albumName;
   final String thumbnailUrl;
-
+  final String albumId;
   const AlbumItem({
     Key? key,
+    required this.albumId,
     required this.albumName,
     required this.thumbnailUrl,
   }) : super(key: key);
@@ -18,11 +19,11 @@ class AlbumItem extends StatelessWidget {
       onTap: () {
         // Handle the album click
         String? userId = FirebaseAuth.instance.currentUser?.uid;
-        String albumId = '$userId/user_albums/$albumName';
+        String albumIdd = '$userId/user_albums/$albumId';
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PhotoDisplayPage(albumId: albumId),
+            builder: (context) => PhotoDisplayPage(albumId: albumIdd, albumName: albumName),
           ),
         );
         print("Album '$albumId' clicked");
@@ -51,7 +52,7 @@ class AlbumItem extends StatelessWidget {
             ),
             // Album Name
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(6.0),
               child: Text(
                 albumName,
                 textAlign: TextAlign.center,

@@ -9,6 +9,7 @@ import 'package:my_app/features/user_auth/presentations/pages/albums.dart';
 import 'dart:io';
 
 import 'package:my_app/features/user_auth/presentations/pages/photoDisplayPage.dart';
+bool isLoading = false; 
 
 class CreateAlbum extends StatefulWidget {
   const CreateAlbum({super.key});
@@ -54,19 +55,22 @@ class CreateAlbumState extends State<CreateAlbum> {
     request.files.add(await http.MultipartFile.fromPath('photos', image.path));
 }
 
-
+  setState(() {
+      isLoading = true; // Set loading to true before the request
+    });
   var response = await request.send();
 
   if (response.statusCode == 200) {
     final responseBody = await response.stream.bytesToString();
     final responseData = jsonDecode(responseBody);
     final albumId = responseData['albumPath']; 
-    print(albumId);
-    // Navigate to the photo display page with the albumId
+    setState(() {
+      isLoading = false; // Set loading to false after the request
+    });    // Navigate to the photo display page with the albumId
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PhotoDisplayPage(albumId: albumId),
+        builder: (context) => PhotoDisplayPage(albumId: albumId, albumName: albumNameController.text),
       ),
     );
   } else {
@@ -92,83 +96,122 @@ class CreateAlbumState extends State<CreateAlbum> {
     }
   }
 
-  @override
-  
  @override
 Widget build(BuildContext context) {
+  // Define a common button style
+  final ButtonStyle buttonStyle = ElevatedButton.styleFrom(
+    foregroundColor: Colors.white,
+    backgroundColor: Colors.blue,
+    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+  );
+
   return Scaffold(
     appBar: AppBar(
-    leading: IconButton(
-    icon: const Icon(Icons.arrow_back),
-    onPressed: () {
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const Albums()),(route)=>false);
-    },
-  ),
-  title: const Text('Create Album'),    ),
-    body: SingleChildScrollView( // Make the entire body scrollable
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const Albums()),
+            (route) => false,
+          );
+        },
+      ),
+      title: const Text('Create Album'),
+    ),
+    body:   
+    SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(10.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Add TextField for album name
-            const Text('Album Name'),
-            TextField(
-              controller: albumNameController,
-              decoration: const InputDecoration(
-                hintText: 'Enter album name',
+            Center(
+              child: SizedBox(
+                width: 250,
+                child: TextField(
+                  controller: albumNameController,
+                  textAlign: TextAlign.center,
+                  decoration: const InputDecoration(
+                    hintText: 'Add a title',
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 200,
+              width: double.infinity,
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 4,
+                  mainAxisSpacing: 4,
+                ),
+                itemCount: selectedImages.length,
+                itemBuilder: (context, index) {
+                  return Image.file(
+                    selectedImages[index],
+                    fit: BoxFit.cover,
+                  );
+                },
               ),
             ),
             const SizedBox(height: 16),
-            selectedImages.isEmpty
-                ? const Text('No images selected.')
-                : SizedBox( // Wrap in SizedBox to control height
-                    height: 200, // Adjust this height as needed
-                    child: GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(), // Disable GridView scrolling to avoid conflicts with SingleChildScrollView
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 4,
-                        mainAxisSpacing: 4,
-                      ),
-                      itemCount: selectedImages.length,
-                      itemBuilder: (context, index) {
-                        return Image.file(
-                          selectedImages[index],
-                          fit: BoxFit.cover,
-                        );
-                      },
-                    ),
-                  ),
-            const SizedBox(height: 16),
-            ElevatedButton(
+
+            ElevatedButton.icon(
               onPressed: pickImage,
-              child: const Text('Pick Images'),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text('Select photo'),
+              style: buttonStyle,
             ),
             const SizedBox(height: 16),
-            const Text('Select Start Date'),
-            ElevatedButton(
-              onPressed: () => selectDate(context, true),
-              child: Text(startDate == null
-                  ? 'Select Start Date'
-                  : DateFormat('yyyy-MM-dd').format(startDate!)),
+
+            // Start and End date selection side by side
+            const Text(
+              'Select Dates',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => selectDate(context, true),
+                    icon: const Icon(Icons.calendar_today, color: Colors.white),
+                    label: Text(startDate == null
+                        ? 'Start Date'
+                        : DateFormat('yyyy-MM-dd').format(startDate!)),
+                    style: buttonStyle,
+                  ),
+                ),
+                const SizedBox(width: 10), // Add some spacing
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => selectDate(context, false),
+                    icon: const Icon(Icons.calendar_today, color: Colors.white),
+                    label: Text(endDate == null
+                        ? 'End Date'
+                        : DateFormat('yyyy-MM-dd').format(endDate!)),
+                    style: buttonStyle,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            const Text('Select End Date'),
-            ElevatedButton(
-              onPressed: () => selectDate(context, false),
-              child: Text(endDate == null
-                  ? 'Select End Date'
-                  : DateFormat('yyyy-MM-dd').format(endDate!)),
-            ),
-            const SizedBox(height: 16),
-            const Text('Number of Photos'),
+
+            const Text(
+              'Select Number of Photos',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),            
             Slider(
               value: photoCount.toDouble(),
               min: 1,
               max: 100,
               divisions: 99,
+            
               label: photoCount.toString(),
               onChanged: (value) {
                 setState(() {
@@ -177,14 +220,25 @@ Widget build(BuildContext context) {
               },
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: pickersubmitData,
-              child: const Text('Submit'),
+
+            Center(
+              child: isLoading
+                  ? CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: pickersubmitData,
+                      style: buttonStyle,
+                      child: const Text('Continue'),
+                    ),
             ),
           ],
         ),
       ),
     ),
+      
   );
 }
+
 }
+
+
+

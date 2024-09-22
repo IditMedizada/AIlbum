@@ -6,8 +6,9 @@ import 'package:my_app/features/user_auth/presentations/pages/albums.dart';
 
 class PhotoDisplayPage extends StatefulWidget {
   final String albumId;
+  final String albumName;
 
-  const PhotoDisplayPage({super.key, required this.albumId});
+  const PhotoDisplayPage({super.key, required this.albumId, required this.albumName});
 
   @override
   PhotoDisplayPageState createState() => PhotoDisplayPageState();
@@ -53,7 +54,7 @@ class PhotoDisplayPageState extends State<PhotoDisplayPage> {
         Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const Albums()),(route)=>false);
     },
   ),
-        title: const Text('Album Photos'),
+        title: Text(widget.albumName),
       ),
       body: photoUrls.isEmpty
           ? const Center(child: CircularProgressIndicator())
