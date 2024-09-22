@@ -108,6 +108,52 @@ class PhotoService {
 
         return albumPath;
     }
+    static async createDefaultFaceAlbum(user, faceEncodings) {
+        // Iterate over each face encoding to create an album for it
+        const albumPromises = faceEncodings.map(async (encoding) => {
+            const faceId = encoding.faceId;
+            const photos = encoding.photos;
+
+            if (!photos || photos.length < 7) {
+                console.log(`Skipping album creation for faceId ${faceId} as it has less than 7 photos.`);
+                return null;
+            }
+            
+
+            const albumName = `default`; 
+            const albumPath = `${user}/user_albums/${uuidv4()}#${albumName}`;
+            console.log(`Creating default album for faceId ${faceId} at ${albumPath}`);
+
+            // Copy each photo to the album path
+            const copyPromises = photos.map((photo) => {
+                if (!photo) {
+                    throw new Error('Invalid photo path');
+                }
+
+                const sourceFilePath = `${photo}`; // Use the full photo path
+                const destinationFilePath = `${albumPath}/${path.basename(photo)}`;
+
+                console.log(`Copying from ${sourceFilePath} to ${destinationFilePath}`);
+
+                return admin
+                    .storage()
+                    .bucket()
+                    .file(sourceFilePath)
+                    .copy(destinationFilePath)
+                    .catch((error) => {
+                        console.error(`Error copying file ${sourceFilePath}:`, error);
+                        throw error;
+                    });
+            });
+
+            await Promise.all(copyPromises);
+            return albumPath;
+        });
+
+        const createdAlbums = await Promise.all(albumPromises);
+        return createdAlbums.filter(album => album !== null); // Return only successfully created albums
+    }
+
 }
 
 module.exports = PhotoService;

@@ -14,7 +14,7 @@ class PhotoController {
         console.log("Request body:", req.body);
 
         const user = req.body.user;
-        if (!user) {
+        if (!user) {    
             return res.status(400).json({ message: 'User is required.' });
         }
 
@@ -55,7 +55,10 @@ class PhotoController {
             console.error("Error processing photos:", error);
             res.status(500).json({ message: 'An error occurred while processing photos.', error: error.message });
         }
+
+        
     }
+
 }
 
 module.exports = PhotoController;

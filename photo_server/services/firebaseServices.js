@@ -4,6 +4,23 @@ const os = require('os');
 const fs = require('fs');
 
 class FirebaseService {
+    static async getAllFaceEncodings(user) {
+        const faceEncodingsFolder = `${user}/face_encodings/`;
+        const [files] = await bucket.getFiles({ prefix: faceEncodingsFolder });
+
+        const faceEncodings = await Promise.all(
+            files.map(async (file) => {
+                const [metadata] = await file.getMetadata();
+                const faceId = path.basename(file.name, '.json'); // Assuming faceId is the file name
+                const photos = JSON.parse(metadata.metadata.photos); // Assuming photos are stored in metadata
+
+                return { faceId, photos };
+            })
+        );
+
+        return faceEncodings;
+    }
+
     static async downloadImage(filePath) {
         const tempFilePath = path.join(os.tmpdir(), path.basename(filePath));
         await bucket.file(filePath).download({ destination: tempFilePath });
