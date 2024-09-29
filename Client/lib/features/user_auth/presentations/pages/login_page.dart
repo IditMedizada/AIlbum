@@ -1,8 +1,11 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:my_app/features/user_auth/presentations/pages/albums.dart';
 import 'package:my_app/features/user_auth/presentations/pages/sign_up_page.dart';
 import 'package:my_app/features/user_auth/presentations/widgets/form_container_widget.dart';
+import 'package:my_app/main.dart';
 import '../../../../global/common/toast.dart';
 import '../../firebase_auth_implementation/firebase_auth_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -133,14 +136,21 @@ Widget build(BuildContext context) {
       showToast(message: 'User is successfuly sign in');
       String? userId = FirebaseAuth.instance.currentUser?.uid;
       if(userId != null ){ 
-        await saveUserId(userId);
+         await saveUserId(userId);
+
+    // Check if the service is already running before starting it
+    final serviceStatus = await service.isRunning();
+    if (!serviceStatus) {
+      try {
+        service.startService();
+      } catch (e) {
+        print("Error starting service: $e");
+        showToast(message: "Failed to start background service.");
       }
-     
-    // await Workmanager().registerPeriodicTask(
-    //   "nightlyPhotoUpload",
-    //   "nightlyPhotoUploadTask",
-    //   frequency: Duration(minutes: 15), // Minimum allowed frequency
-    // );
+    } else {
+      print("Service is already running.");
+    }
+      }
     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const Albums()),(route)=>false);
     }else{
      showToast(message:"Some error happend");

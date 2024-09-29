@@ -24,8 +24,10 @@ class AlbumState extends State<Albums> {
       FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
   List<Map<String, dynamic>> albumData = [];
   List<String> photoUrls = []; // List to hold photo URLs
-  // Create a state variable to track whether the checkbox is checked
-  bool isChecked = false;
+  bool isChecked = false;  // Create a state variable to track whether the checkbox is checked
+  bool isLoading = true; // New variable to track loading state
+  double loadingProgress = 0.0; // New variable for loading progress
+  int count = 1;
   @override
   void initState() {
     super.initState();
@@ -34,17 +36,16 @@ class AlbumState extends State<Albums> {
     FlutterBackgroundService().on('sync_complete').listen((data) {
       if (data?["sync_complete"] == true) {
         isButtonEnabledNotifier.value = true; // Enable button
-        print("Button enabled after sync completed");
       }
     });
 
-  
+    fetchPhotos(); 
     fetchAlbums();
-    fetchPhotos(); // Fetch photos after fetching albums
   }
 
   // Fetch albums from Firebase Storage
   Future<void> fetchAlbums() async {
+    count = 1;
     String? userId = FirebaseAuth.instance.currentUser?.uid;
     String albumsPath = '$userId/user_albums/'; // Define the path
 
@@ -62,7 +63,8 @@ class AlbumState extends State<Albums> {
         albumId = albumName;
         albumName = albumName.split('#').last;
         if (albumName == 'default'){
-          albumName = "";
+          albumName = "Default Album $count";
+          count ++;
         }
       } else {
         albumName = ""; // Default to the regular name if no '#' is found
@@ -113,8 +115,7 @@ class AlbumState extends State<Albums> {
 
   // Method to send request to server to create default albums
 Future<void> createDefaultAlbums() async {
-  print("hii i am here!");
-  final uri = Uri.parse('http://192.168.1.36:5000/api/photos/create-default-face-albums');
+  final uri = Uri.parse('http://192.168.1.8:5000/api/photos/create-default-face-albums');
   String? user = FirebaseAuth.instance.currentUser?.uid;
   // Send the request as JSON
   var response = await http.post(
@@ -128,13 +129,8 @@ Future<void> createDefaultAlbums() async {
   );
 
   if (response.statusCode == 200) {
-    print("finishhhhhhhhhhhhhhhhhhhhhhhh");
     fetchAlbums();
-  } else {
-    print("Failed to notify server ${response.statusCode}");
   }
-
-
 }
 
 @override
@@ -156,7 +152,7 @@ Widget build(BuildContext context) {
           onPressed: () async {
             // Sign out from Firebase
             await FirebaseAuth.instance.signOut();
-
+            FlutterBackgroundService().invoke("stopService");
             // Navigate to the sign-in page after signing out
             Navigator.pushAndRemoveUntil(
               context,
@@ -192,6 +188,8 @@ Widget build(BuildContext context) {
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
                           isButtonEnabled ? Colors.blue : Colors.grey,
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+
                     ), // Disable button if isButtonEnabled is false
                     child: const Text('Create New Album'),
                   ),
@@ -227,7 +225,7 @@ Widget build(BuildContext context) {
         // Display albums in a grid view
         Expanded(
           child: albumData.isEmpty
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(child: Text('No albums found'))
               : GridView.builder(
                   padding: const EdgeInsets.all(8),
                   gridDelegate:
@@ -243,13 +241,16 @@ Widget build(BuildContext context) {
                       albumId: album['albumId'],
                       albumName: album['albumName'],
                       thumbnailUrl: album['thumbnailUrl'],
+                      onAlbumDeleted: fetchAlbums, // Pass the fetchAlbums method
+
                     );
                   },
                 ),
         ),
 
-        const Divider(), // Separator between albums and photos
-
+        const Divider(
+          thickness: 4, // Adjust thickness value as needed
+        ),
         // Display all photos in a grid view
         Expanded(
           child: photoUrls.isEmpty
