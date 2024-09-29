@@ -6,11 +6,48 @@ const FaceService = require('../services/faceService');
 const fs = require('fs');
 const { Canvas, Image, ImageData } = require('canvas');
 const canvas = require('canvas');
+const admin = require('firebase-admin');
 
 // Patch the environment with node-canvas
 faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 
 class AlbumController {
+    static async deleteAlbum(req, res) {
+        const { albumPath } = req.body;
+        console.log("in delete album for this req: ",albumPath);
+        if (!albumPath) {
+            return res.status(400).json({ message: 'Album path is required.' });
+        }
+
+        try {
+            // Extract user folder and album path from the provided albumPath
+            const albumFolderPath = albumPath.split('#')[0]; // Remove the album name after `#`
+            
+            console.log(`Attempting to delete album at path: ${albumPath}`);
+
+            // List all files in the album directory
+            const [files] = await admin.storage().bucket().getFiles({ prefix: albumPath });
+
+            if (files.length === 0) {
+                console.log(`No files found in album path ${albumPath}`);
+                return res.status(404).json({ message: `Album not found.` });
+            }
+
+            // Create a promise to delete each file in the album
+            const deletePromises = files.map(file => file.delete());
+
+            // Wait for all files to be deleted
+            await Promise.all(deletePromises);
+
+            console.log(`Successfully deleted album at path ${albumPath}`);
+            return res.status(200).json({ message: `Album successfully deleted.` });
+        } catch (error) {
+            console.error(`Error deleting album at path ${albumPath}:`, error);
+            return res.status(500).json({ message: 'Error deleting album.', error: error.message });
+        }
+    }
+
+
     static async createAlbum(req, res) {
         try {
             const { user, startDate, endDate, numPhotos , albumName } = req.body;

@@ -13,4 +13,5 @@ router.post('/process-photos', PhotoController.processUploadedPhotos);
 
 router.post('/create-default-face-albums', FaceAlbumController.createDefaultFaceAlbums);
 router.post('/create-album', upload.array('photos'), AlbumController.createAlbum);
+router.post('/delete-album', AlbumController.deleteAlbum);
 module.exports = router;

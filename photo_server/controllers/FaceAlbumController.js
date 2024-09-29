@@ -16,7 +16,7 @@ class FaceAlbumController {
             }
 
             // Create default albums for each face encoding
-            const createdAlbums = await PhotoService.createDefaultFaceAlbum(user, faceEncodings);
+            const createdAlbums = await PhotoService.deleteAndCreateDefaultAlbums(user, faceEncodings);
 
             return res.status(200).json({
                 message: 'Default face albums created successfully',

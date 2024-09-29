@@ -1,15 +1,17 @@
-const { Canvas, Image, ImageData, loadImage } = require('canvas'); // Import loadImage explicitly
 const faceapi = require('face-api.js');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const FirebaseService = require('../services/firebaseServices');
+const { Canvas, Image, ImageData } = require('canvas');
+faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 const FaceEncodingModel = require('../models/faceEncodingModel');
 
+// Load models
+const MODEL_URL = path.join(__dirname, '../models');
 faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 
-const MODEL_URL = path.join(__dirname, '../models');
-
 class FaceService {
-    // Load models for use (ensure models are loaded before processing images)
+    // Load models for face detection and recognition
     static async loadModels() {
         await Promise.all([
             faceapi.nets.tinyFaceDetector.loadFromDisk(MODEL_URL),
@@ -19,9 +21,9 @@ class FaceService {
         ]);
     }
 
-    // Process faces in the image and associate them with photo
-    static async processFaces(filePath, photoPath) {
-        const detections = await faceapi.detectAllFaces(filePath)
+    // Process faces in the image and associate them with the photo
+    static async processFaces(image, photoPath, user) {
+        const detections = await faceapi.detectAllFaces(image)
             .withFaceLandmarks()
             .withFaceDescriptors();
 
@@ -34,7 +36,7 @@ class FaceService {
 
             for (const face of faceEncodings) {
                 const distance = faceapi.euclideanDistance(new Float32Array(face.descriptor), descriptor);
-                if (distance < 0.6) {  // Similarity threshold
+                if (distance < 0.6) {
                     matchingFaceId = face.faceId;
                     break;
                 }
@@ -43,23 +45,18 @@ class FaceService {
             let faceId;
             if (matchingFaceId) {
                 faceId = matchingFaceId;
-                // Always add the current photo path to the face encoding
                 await FaceEncodingModel.addPhotoToFace(faceId, photoPath);
             } else {
                 faceId = uuidv4();
-                await FaceEncodingModel.saveFaceEncoding(faceId, descriptor, photoPath); // Save new face encoding with photo path
-                // Always add the current photo path to the face encoding
+                await FaceEncodingModel.saveFaceEncoding(faceId, descriptor, photoPath);
                 await FaceEncodingModel.addPhotoToFace(faceId, photoPath);
-                
             }
-            
+
             faceIds.push(faceId);
         }
 
         return faceIds;
     }
 }
-
-
 
 module.exports = FaceService;
