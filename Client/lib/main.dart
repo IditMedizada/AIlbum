@@ -1,14 +1,17 @@
 
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:my_app/features/app/splash_screen/splash_screen.dart';
 import 'package:my_app/features/user_auth/presentations/pages/login_page.dart';
 import 'package:my_app/helperFunctions/gallery_sync.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:workmanager/workmanager.dart';
 
 ValueNotifier<bool> isButtonEnabledNotifier = ValueNotifier(true); // Button state notifier
+final service = FlutterBackgroundService();
+
+// Map<String, ValueNotifier<bool>> buttonStateNotifiers = {};
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,19 +25,10 @@ Future<void> main() async {
   );
 
 
-  await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
-  await Workmanager().registerPeriodicTask(
-      "uniqueNightlyPhotoUploadTask",  // Unique task name
-      "nightlyPhotoUploadTask",
-      frequency: const Duration(minutes: 15), // Frequency for nightly task
-
-  );
- 
-
-  if (await Permission.notification.request().isGranted) {
-    await initializeService();
-  }
+  await initializeService();
   runApp(const MyApp());
+
+  service.startService();
 }
 
 
@@ -54,7 +48,6 @@ class MyApp extends StatelessWidget {
 }
 
 Future<void> initializeService() async {
-  final service = FlutterBackgroundService();
 
   await service.configure(
     androidConfiguration: AndroidConfiguration(
@@ -72,8 +65,7 @@ Future<void> initializeService() async {
     ),
   );
 
-  // Start the background service
-  service.startService();
+
 }
 
 
@@ -93,30 +85,24 @@ void onStart(ServiceInstance service) async {
 
   // Listen for events
   service.on('upload_photos').listen((event) async {
-    final userId = event!["userId"];
-    if (userId != null) {
+      final userId = event!["userId"];
       await GallerySync().syncPhotos(userId);
       service.invoke('sync_complete', {"sync_complete": true});
       service.stopSelf();
-    }
+
+  });
+
+ // Listening for stopService action
+  service.on("stopService").listen((event) {
+    service.stopSelf();
+
+  });
+
+  // Start a periodic task every 24 hours
+  Timer.periodic(const Duration(minutes:20), (timer) async {
+      await GallerySync().nightModePhotoUploading();
   });
 }
 
+ 
 
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    print("Callback Dispatcher invoked with task: $task and inputData: $inputData");
-
-    if (task == "nightlyPhotoUploadTask" && inputData != null) {
-      final userId = await LoginPageState().getUserId();
-      if (userId != null) {
-        await GallerySync().syncPhotos(userId);
-        print("Photos uploaded for user: $userId");
-      } else {
-        print("User ID not found in input data");
-      }
-    }
-    return Future.value(true);
-  });
-
-}

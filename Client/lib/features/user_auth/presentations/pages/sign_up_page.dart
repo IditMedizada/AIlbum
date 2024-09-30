@@ -5,6 +5,7 @@ import 'package:my_app/features/user_auth/firebase_auth_implementation/firebase_
 import 'package:my_app/features/user_auth/presentations/pages/login_page.dart';
 import 'package:my_app/features/user_auth/presentations/widgets/form_container_widget.dart';
 import 'package:my_app/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../global/common/toast.dart';
 
@@ -123,7 +124,10 @@ class _SignUpPageState extends State<SignUpPage> {
     if (user != null){
         showToast(message: 'User is successfuly created');
         final String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userId', userId);
         isButtonEnabledNotifier.value = false;
+        await saveUserId(userId);
         // Start the background service to upload photos
         FlutterBackgroundService().invoke('upload_photos', {
         "userId": userId,
@@ -134,4 +138,10 @@ class _SignUpPageState extends State<SignUpPage> {
     }
     
   }
+}
+
+  // Save user ID
+Future<void> saveUserId(String userId) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('userId', userId);
 }
