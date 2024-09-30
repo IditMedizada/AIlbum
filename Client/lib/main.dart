@@ -28,7 +28,6 @@ Future<void> main() async {
   await initializeService();
   runApp(const MyApp());
 
-  service.startService();
 }
 
 
@@ -64,7 +63,8 @@ Future<void> initializeService() async {
       autoStart: true,
     ),
   );
-
+  // Start the service
+  service.startService();
 
 }
 
@@ -88,8 +88,6 @@ void onStart(ServiceInstance service) async {
       final userId = event!["userId"];
       await GallerySync().syncPhotos(userId);
       service.invoke('sync_complete', {"sync_complete": true});
-      service.stopSelf();
-
   });
 
  // Listening for stopService action
@@ -98,10 +96,17 @@ void onStart(ServiceInstance service) async {
 
   });
 
-  // Start a periodic task every 24 hours
-  Timer.periodic(const Duration(minutes:20), (timer) async {
-      await GallerySync().nightModePhotoUploading();
+
+  service.on('night_mode').listen((event) async {
+      final userId = event!["userId"];
+      print("stsrt night modeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+      // Start a periodic task every 24 hours
+      Timer.periodic(const Duration(minutes:2), (timer) async {
+      await GallerySync().nightModePhotoUploading(userId);
+      });
+
   });
+ 
 }
 
  

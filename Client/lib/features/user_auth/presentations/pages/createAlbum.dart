@@ -82,6 +82,20 @@ class CreateAlbumState extends State<CreateAlbum> {
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.blueAccent,
+              onPrimary: Colors.white,
+              surface: Colors.blueAccent,
+              onSurface: Colors.black,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null && picked != (isStartDate ? startDate : endDate)) {
       setState(() {
@@ -98,14 +112,24 @@ class CreateAlbumState extends State<CreateAlbum> {
   Widget build(BuildContext context) {
     final ButtonStyle buttonStyle = ElevatedButton.styleFrom(
       foregroundColor: Colors.white,
-      backgroundColor: Colors.blue,
+      backgroundColor: Colors.blueAccent,
       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
     );
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
+        backgroundColor: Colors.lightBlueAccent,
+        title: const Text(
+          'Create New Album',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pushAndRemoveUntil(
               context,
@@ -115,145 +139,155 @@ class CreateAlbumState extends State<CreateAlbum> {
           },
         ),
       ),
-      body: Stack(
-        children: [
-          Container(
-            width: double.infinity,
-            height: double.infinity, // Ensures full height
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/background.jpg'),
-                fit: BoxFit.cover,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+            _buildSectionTitle('Album Title'),
+            const SizedBox(height: 8),
+            TextField(
+              controller: albumNameController,
+              decoration: InputDecoration(
+                hintText: 'Enter album name',
+                hintStyle: const TextStyle(color: Colors.grey),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
               ),
             ),
-          ),
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 40), // Add space before the title
-                  const Center(
-                    child: Text(
-                      'Create New Album', // Title text
-                      style: TextStyle(
-                        fontSize: 24, // Adjust font size as needed
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black, // Color for the title
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20), // Space below the title
-                  Center(
-                    child: SizedBox(
-                      width: 250,
-                      child: TextField(
-                        controller: albumNameController,
-                        textAlign: TextAlign.center,
-                        decoration: const InputDecoration(
-                          hintText: 'Add a title',
-                          border: OutlineInputBorder(),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey, width: 1),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.blue, width: 2),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16), // Increased space between elements
-                  SizedBox(
-                    width: double.infinity,
-                    child: GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 4,
-                        mainAxisSpacing: 4,
-                      ),
-                      itemCount: selectedImages.length,
-                      itemBuilder: (context, index) {
-                        return Image.file(
-                          selectedImages[index],
-                          fit: BoxFit.cover,
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: pickImage,
-                    icon: const Icon(Icons.add, color: Colors.white),
-                    label: const Text('Select photo'),
-                    style: buttonStyle,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Select Dates',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => selectDate(context, true),
-                          icon: const Icon(Icons.calendar_today, color: Colors.white),
-                          label: Text(startDate == null
-                              ? 'Start Date'
-                              : DateFormat('yyyy-MM-dd').format(startDate!)),
-                          style: buttonStyle,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => selectDate(context, false),
-                          icon: const Icon(Icons.calendar_today, color: Colors.white),
-                          label: Text(endDate == null
-                              ? 'End Date'
-                              : DateFormat('yyyy-MM-dd').format(endDate!)),
-                          style: buttonStyle,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Select Number of Photos',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Slider(
-                    value: photoCount.toDouble(),
-                    min: 1,
-                    max: 100,
-                    divisions: 99,
-                    label: photoCount.toString(),
-                    onChanged: (value) {
-                      setState(() {
-                        photoCount = value.toInt();
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: isLoading
-                        ? CircularProgressIndicator()
-                        : ElevatedButton(
-                            onPressed: pickersubmitData,
-                            style: buttonStyle,
-                            child: const Text('Continue'),
-                          ),
-                  ),
-                ],
+            const SizedBox(height: 20),
+            _buildSectionTitle('Selected Images'),
+            const SizedBox(height: 8),
+            selectedImages.isNotEmpty
+                ? _buildImageGrid()
+                : _buildEmptyImageContainer(),
+            const SizedBox(height: 30), // Increased spacing
+            Center(
+              child: FloatingActionButton.extended(
+                onPressed: pickImage,
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text('Select Photos', style: TextStyle(fontSize: 16)),
+                backgroundColor: Colors.blueAccent,
+                elevation: 5,
+                heroTag: 'selectPhotosFAB',  // Unique heroTag for this FAB
               ),
             ),
+            const SizedBox(height: 30),
+            _buildDateSelectors(),
+            const SizedBox(height: 30),
+            _buildSectionTitle('Number of Photos'),
+            Slider(
+              value: photoCount.toDouble(),
+              min: 1,
+              max: 100,
+              divisions: 99,
+              activeColor: Colors.blueAccent,
+              inactiveColor: Colors.grey.shade300,
+              label: photoCount.toString(),
+              onChanged: (value) {
+                setState(() {
+                  photoCount = value.toInt();
+                });
+              },
+            ),
+            const SizedBox(height: 40),
+            Center(
+              child: isLoading
+                  ? const CircularProgressIndicator(color: Colors.blueAccent)
+                  : FloatingActionButton.extended(
+                      onPressed: pickersubmitData,
+                      icon: const Icon(Icons.check, color: Colors.white),
+                      label: const Text('Create Album', style: TextStyle(fontSize: 16)),
+                      backgroundColor: Colors.blueAccent,
+                      elevation: 5,
+                      heroTag: 'createAlbumFAB',  // Unique heroTag for this FAB
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        color: Colors.grey.shade800,
+        fontSize: 18,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+
+  Widget _buildImageGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: selectedImages.length,
+      itemBuilder: (context, index) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.file(
+            selectedImages[index],
+            fit: BoxFit.cover,
           ),
-        ],
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyImageContainer() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Center(
+        child: Text(
+          'No images selected',
+          style: TextStyle(color: Colors.grey.shade600),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateSelectors() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _buildDateButton('Start Date', startDate, true),
+        const SizedBox(width: 10),
+        _buildDateButton('End Date', endDate, false),
+      ],
+    );
+  }
+
+  Widget _buildDateButton(String label, DateTime? date, bool isStartDate) {
+    return Expanded(
+      child: FloatingActionButton.extended(
+        onPressed: () => selectDate(context, isStartDate),
+        label: Text(
+          date == null ? label : DateFormat('yyyy-MM-dd').format(date),
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.blueAccent,
+        icon: const Icon(Icons.calendar_today, color: Colors.white),
+        heroTag: isStartDate ? 'startDateFAB' : 'endDateFAB',  // Unique heroTag for each FAB
       ),
     );
   }

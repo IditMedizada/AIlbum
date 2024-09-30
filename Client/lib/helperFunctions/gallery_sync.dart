@@ -2,7 +2,6 @@
 
 import 'dart:convert';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:http/http.dart' as http;
@@ -52,7 +51,7 @@ class GallerySync{
       }
 
       // Notify the server after all photos are uploaded
-      final uri = Uri.parse('http://192.168.1.8:5000/api/photos/process-photos');
+      final uri = Uri.parse('http://192.168.1.159:5000/api/photos/process-photos');
       await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'user': user}));
       print("All photos uploaded and server notified - gallery sync.");
     } else {
@@ -61,55 +60,52 @@ class GallerySync{
   }
 
 
-  Future<void> nightModePhotoUploading() async {
-    String? user = FirebaseAuth.instance.currentUser?.uid;
+  Future<void> nightModePhotoUploading(String user) async {
 
-    if (user != null){
-      final albums = await PhotoManager.getAssetPathList(type: RequestType.image);
-      AssetPathEntity? mainAlbum;
+    final albums = await PhotoManager.getAssetPathList(type: RequestType.image);
+    AssetPathEntity? mainAlbum;
 
-      // Finding the album
-      for (final album in albums) {
-        final photos = await album.getAssetListRange(start: 0, end: 1);
-        if (photos.isNotEmpty && album.name == "test") {
-          mainAlbum = album;
-          break;
-        }
-      }
-
-      if (mainAlbum != null) {
-        int start = 0;
-        const pageSize = 10;
-        
-        while (true) {
-          final photos = await mainAlbum.getAssetListRange(start: start, end: start + pageSize);
-          if (photos.isEmpty) break;
-
-        for (final photo in photos) {
-              final file = await photo.file;
-              if (file != null) {
-                bool isExist = await isPhotoUploaded(photo.title, user);
-                if(!isExist){
-                  await uploadUserPhoto(photo.title,user, file, photo.createDateTime.toIso8601String());
-                }
-              }
-            }
-
-          start += pageSize;
-        }
-
-    
-        // Notify the server after all photos are uploaded
-        print("send night mode to serverrrrr");
-        final uri = Uri.parse('http://192.168.1.8:5000/api/photos/process-photos');
-        await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'user': user}));
-
-        print("All photos uploaded and server notified - night mode");
-      } else {
-        print("Main album not found");
+    // Finding the album
+    for (final album in albums) {
+      final photos = await album.getAssetListRange(start: 0, end: 1);
+      if (photos.isNotEmpty && album.name == "test") {
+        mainAlbum = album;
+        break;
       }
     }
+
+    if (mainAlbum != null) {
+      int start = 0;
+      const pageSize = 10;
+      
+      while (true) {
+        final photos = await mainAlbum.getAssetListRange(start: start, end: start + pageSize);
+        if (photos.isEmpty) break;
+
+      for (final photo in photos) {
+            final file = await photo.file;
+            if (file != null) {
+              bool isExist = await isPhotoUploaded(photo.title, user);
+              if(!isExist){
+                await uploadUserPhoto(photo.title,user, file, photo.createDateTime.toIso8601String());
+              }
+            }
+          }
+
+        start += pageSize;
+      }
+
   
+      // Notify the server after all photos are uploaded
+      print("send night mode to serverrrrr");
+      final uri = Uri.parse('http://192.168.1.159:5000/api/photos/process-photos');
+      await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'user': user}));
+
+      print("All photos uploaded and server notified - night mode");
+    } else {
+      print("Main album not found");
+    }
+    
   }
 
  

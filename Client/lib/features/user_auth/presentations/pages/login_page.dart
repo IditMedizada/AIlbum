@@ -2,6 +2,7 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:my_app/features/user_auth/presentations/pages/albums.dart';
 import 'package:my_app/features/user_auth/presentations/pages/sign_up_page.dart';
 import 'package:my_app/features/user_auth/presentations/widgets/form_container_widget.dart';
@@ -150,6 +151,10 @@ Widget build(BuildContext context) {
     } else {
       print("Service is already running.");
     }
+            // Start the background service to upload photos
+        FlutterBackgroundService().invoke('night_mode', {
+        "userId": userId,
+        });
       }
     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const Albums()),(route)=>false);
     }else{

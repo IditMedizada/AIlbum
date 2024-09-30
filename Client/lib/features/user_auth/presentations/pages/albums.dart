@@ -115,7 +115,7 @@ class AlbumState extends State<Albums> {
 
   // Method to send request to server to create default albums
 Future<void> createDefaultAlbums() async {
-  final uri = Uri.parse('http://192.168.1.8:5000/api/photos/create-default-face-albums');
+  final uri = Uri.parse('http://192.168.1.159:5000/api/photos/create-default-face-albums');
   String? user = FirebaseAuth.instance.currentUser?.uid;
   // Send the request as JSON
   var response = await http.post(
@@ -152,7 +152,7 @@ Widget build(BuildContext context) {
           onPressed: () async {
             // Sign out from Firebase
             await FirebaseAuth.instance.signOut();
-            FlutterBackgroundService().invoke("stopService");
+            // FlutterBackgroundService().invoke("stopService");
             // Navigate to the sign-in page after signing out
             Navigator.pushAndRemoveUntil(
               context,

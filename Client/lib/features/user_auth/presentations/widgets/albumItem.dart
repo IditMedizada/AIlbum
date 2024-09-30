@@ -1,8 +1,6 @@
 import 'dart:convert';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:my_app/features/user_auth/presentations/pages/albums.dart';
 import 'package:my_app/features/user_auth/presentations/pages/photoDisplayPage.dart';
 import 'package:http/http.dart' as http;
 
@@ -23,7 +21,7 @@ class AlbumItem extends StatelessWidget {
 
 Future<void> onDelete(BuildContext context,String albumPath) async {
   print('enter hereeeeeeeeeeeee');
-  final uri = Uri.parse('http://192.168.1.8:5000/api/photos/delete-album');
+  final uri = Uri.parse('http://192.168.1.159:5000/api/photos/delete-album');
   print(albumPath);
   // Send the request as JSON
   var response = await http.post(
