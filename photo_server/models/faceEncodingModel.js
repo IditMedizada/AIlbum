@@ -4,6 +4,8 @@ const expectedEncodingLength = 128;
 class FaceEncodingModel {
     // Save a new face encoding or update an existing one
     static async saveFaceEncoding(faceId, descriptor, photoPath) {
+     
+
         const baseFolderPathup = photoPath.substring(0, photoPath.lastIndexOf('/'));
         const baseFolderPath = baseFolderPathup.substring(0, baseFolderPathup.lastIndexOf('/')) + '/face_encodings';
         const encodingFilePath = `${baseFolderPath}/${faceId}.json`;
@@ -70,6 +72,28 @@ class FaceEncodingModel {
         }
     }
     
+    static async getAllFaceEncodingsForUser(user) {
+        const faceEncodingsFolder = `${user}/face_encodings/`;
+        console.log(`Fetching face encodings from: ${faceEncodingsFolder}`); // Log the path being used
+    
+        const [files] = await bucket.getFiles({ prefix: faceEncodingsFolder });
+        console.log(`Number of files found: ${files.length}`); // Log the number of files found in Firebase
+    
+        const faceEncodings = await Promise.all(
+            files.map(async (file) => {
+                const [content] = await file.download();
+                const encoding = JSON.parse(content);
+                console.log(`Fetched encoding for faceId ${path.basename(file.name, '.json')}`); // Log each faceId
+                return {
+                    faceId: path.basename(file.name, '.json'),
+                    descriptor: encoding.descriptor,
+                };
+            })
+        );
+    
+        console.log(`Total face encodings fetched: ${faceEncodings.length}`); // Log the number of encodings fetched
+        return faceEncodings;
+    }
     
 
     // Retrieve all face encodings

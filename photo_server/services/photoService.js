@@ -9,13 +9,12 @@ const FaceEncodingModel = require('../models/faceEncodingModel');
 
 class PhotoService {
     // Extract face IDs from provided photos
-    static async getFaceIdsFromFiles(files , user) {
+    static async getFaceIdsFromFiles(files, user) {
         const faceIds = new Set();
 
         for (const file of files) {
             const tempFilePath = file.path;
             const photoFaceIds = await this.processFacesForAlbum(tempFilePath, user);
-            
             photoFaceIds.forEach(id => faceIds.add(id));
         }
 
@@ -91,22 +90,93 @@ class PhotoService {
             }
         }
 
-        console.log("photos found: ",photos);
+        console.log("photos found: ", photos);
 
         return photos.sort((a, b) => b.matchedFaces - a.matchedFaces); // Sort by number of matched faces
     }
 
     // Create album in Firebase
-    static async createAlbum(user, photos, numPhotos) {
-        const albumPath = `${user}/user_albums/${uuidv4()}`;
+    static async createAlbum(user, photos, numPhotos, albumName) {
+        const albumPath = `${user}/user_albums/${uuidv4()}#${albumName}`;
         const album = photos.slice(0, numPhotos);
 
-        const promises = album.map(photo => 
-            admin.storage().bucket().file(photo.path).copy(`${albumPath}/${path.basename(photo.path)}`)
-        );
-        await Promise.all(promises);
+        // Process photo copying in parallel using Promise.all
+        const copyPromises = album.map(photo => {
+            const sourceFilePath = `${photo.path}`;
+            const destinationFilePath = `${albumPath}/${path.basename(photo.path)}`;
+
+            return admin.storage().bucket().file(sourceFilePath).copy(destinationFilePath)
+                .catch(error => {
+                    console.error(`Error copying file ${sourceFilePath}:`, error);
+                    throw error;
+                });
+        });
+
+        // Wait for all copy operations to finish in parallel
+        await Promise.all(copyPromises);
 
         return albumPath;
+    }
+
+    // Delete all default albums for a user
+    static async deleteExistingDefaultAlbums(user) {
+        const defaultAlbumPrefix = `${user}/user_albums/`;
+        const [albums] = await admin.storage().bucket().getFiles({ prefix: defaultAlbumPrefix });
+
+        const deletePromises = albums
+            .filter(album => album.name.includes('#default')) // Filter only default albums
+            .map(album => admin.storage().bucket().file(album.name).delete());
+
+        if (deletePromises.length > 0) {
+            console.log(`Deleting ${deletePromises.length} existing default albums for user ${user}`);
+            await Promise.all(deletePromises);
+            console.log(`Deleted all default albums for user ${user}`);
+        }
+    }
+
+    // Create default albums
+    static async createDefaultFaceAlbum(user, faceEncodings) {
+        const albumPromises = faceEncodings.map(async (encoding) => {
+            const faceId = encoding.faceId;
+            const photos = encoding.photos;
+
+            if (!photos || photos.length < 7) {
+                console.log(`Skipping album creation for faceId ${faceId} as it has less than 7 photos.`);
+                return null;
+            }
+
+            const albumName = `default`;
+            const albumPath = `${user}/user_albums/${uuidv4()}#${albumName}`;
+            console.log(`Creating default album for faceId ${faceId} at ${albumPath}`);
+
+            const copyPromises = photos.map(photo => {
+                const sourceFilePath = `${photo}`;
+                const destinationFilePath = `${albumPath}/${path.basename(photo)}`;
+
+                return admin.storage().bucket().file(sourceFilePath).copy(destinationFilePath)
+                    .catch(error => {
+                        console.error(`Error copying file ${sourceFilePath}:`, error);
+                        throw error;
+                    });
+            });
+
+            // Parallel execution of copy operations
+            await Promise.all(copyPromises);
+            return albumPath;
+        });
+
+        // Wait for all albums to be created in parallel
+        const createdAlbums = await Promise.all(albumPromises);
+        return createdAlbums.filter(album => album !== null); // Return only successfully created albums
+    }
+
+    // High-level function to delete and then create albums
+    static async deleteAndCreateDefaultAlbums(user, faceEncodings) {
+        // Step 1: Delete existing default albums
+        await this.deleteExistingDefaultAlbums(user);
+
+        // Step 2: Create new default albums
+        return await this.createDefaultFaceAlbum(user, faceEncodings);
     }
 }
 
