@@ -1,6 +1,6 @@
+// ignore_for_file: avoid_print
 
 import 'dart:async';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -9,12 +9,11 @@ import 'package:my_app/features/user_auth/presentations/pages/login_page.dart';
 import 'package:my_app/helperFunctions/gallery_sync.dart';
 
 ValueNotifier<bool> isButtonEnabledNotifier = ValueNotifier(true); // Button state notifier
-final service = FlutterBackgroundService();
-
-// Map<String, ValueNotifier<bool>> buttonStateNotifiers = {};
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
   await Firebase.initializeApp(
     options: const FirebaseOptions(
       apiKey: "AIzaSyCRoY8tAawlcPC9GAZls4kturQQm23CVD0",
@@ -24,12 +23,12 @@ Future<void> main() async {
     ),
   );
 
-
+  // Initialize background service
   await initializeService();
+
+  // Run the app
   runApp(const MyApp());
-
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -40,74 +39,78 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'AI-lbum',
       home: SplashScreen(
-        child:  LoginPage(),
-        ),
+        child: LoginPage(),
+      ),
     );
   }
 }
 
 Future<void> initializeService() async {
+  final service = FlutterBackgroundService();
 
-  await service.configure(
-    androidConfiguration: AndroidConfiguration(
-      onStart: onStart,
-      autoStart: true,
-      isForegroundMode: true, // Ensures the service starts in the foreground
-      notificationChannelId: 'my_foreground_channel',
-      initialNotificationTitle: 'Uploading Photos',
-      initialNotificationContent: 'Uploading photos in progress...',
-      foregroundServiceNotificationId: 888, // Unique notification ID
-    ),
-    iosConfiguration: IosConfiguration(
-      onForeground: onStart,
-      autoStart: true,
-    ),
-  );
-  // Start the service
-  service.startService();
+  // Check if the service is already running
+  bool isRunning = await service.isRunning();
+  print("sssssssssssssssssssssssssssssssssssssssssssssssssssss $isRunning");
+  if (!isRunning) {
+    await service.configure(
+      androidConfiguration: AndroidConfiguration(
+        onStart: onStart,
+        autoStart: true,
+        isForegroundMode: true,
+        notificationChannelId: 'my_foreground_channel',
+        initialNotificationTitle: 'Service Running',
+        initialNotificationContent: 'Service is running in the background.',
+        foregroundServiceNotificationId: 999,
+      ),
+      iosConfiguration: IosConfiguration(
+        onForeground: onStart,
+        autoStart: true,
+      ),
+    );
 
+    try {
+      await service.startService();
+    } catch (e) {
+      print("Error starting service: $e");
+    }  }
 }
 
-
+// Foreground service callback
 void onStart(ServiceInstance service) async {
-  // Initialize Firebase
-  await Firebase.initializeApp();
+  // Initialize Firebase if not already initialized
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp();
+  }
 
-  // Check if the service is running as a foreground service
+  // Ensure that the service runs as a foreground service immediately
   if (service is AndroidServiceInstance) {
-    service.setAsForegroundService(); // This is the correct method for foreground services
+    // Start the service as a foreground service as soon as possible
+    service.setAsForegroundService();
 
+    // Show the notification right after starting the foreground service
     service.setForegroundNotificationInfo(
-      title: "Uploading Photos",
-      content: "Uploading photos in the background.",
+      title: "AI-lbum Service",
+      content: "Background service is running",
     );
   }
 
-  // Listen for events
+  // Handle photo uploads in the background
   service.on('upload_photos').listen((event) async {
-      final userId = event!["userId"];
-      await GallerySync().syncPhotos(userId);
-      service.invoke('sync_complete', {"sync_complete": true});
+    final userId = event!["userId"];
+    await GallerySync().syncPhotos(userId);
+    service.invoke('sync_complete', {"sync_complete": true});
   });
 
- // Listening for stopService action
-  service.on("stopService").listen((event) {
-    service.stopSelf();
-
-  });
-
-
+  // Handle night mode uploads periodically
   service.on('night_mode').listen((event) async {
-      final userId = event!["userId"];
-      print("stsrt night modeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
-      // Start a periodic task every 24 hours
-      Timer.periodic(const Duration(minutes:2), (timer) async {
+    final userId = event!["userId"];
+    Timer.periodic(const Duration(minutes: 2), (timer) async {
       await GallerySync().nightModePhotoUploading(userId);
-      });
-
+    });
   });
- 
+
+  // Stop the service when requested
+  service.on("stopService").listen((event) async {
+    await service.stopSelf();
+  });
 }
-
- 
-

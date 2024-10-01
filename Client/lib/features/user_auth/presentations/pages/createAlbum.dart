@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, avoid_print
+
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -85,7 +87,7 @@ class CreateAlbumState extends State<CreateAlbum> {
       builder: (context, child) {
         return Theme(
           data: ThemeData.light().copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: Colors.blueAccent,
               onPrimary: Colors.white,
               surface: Colors.blueAccent,
@@ -110,14 +112,7 @@ class CreateAlbumState extends State<CreateAlbum> {
 
   @override
   Widget build(BuildContext context) {
-    final ButtonStyle buttonStyle = ElevatedButton.styleFrom(
-      foregroundColor: Colors.white,
-      backgroundColor: Colors.blueAccent,
-      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-    );
+ 
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,

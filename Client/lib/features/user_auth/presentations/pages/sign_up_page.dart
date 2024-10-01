@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -127,7 +129,6 @@ class _SignUpPageState extends State<SignUpPage> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userId', userId);
         isButtonEnabledNotifier.value = false;
-        await saveUserId(userId);
         // Start the background service to upload photos
         FlutterBackgroundService().invoke('upload_photos', {
         "userId": userId,
@@ -140,8 +141,3 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 }
 
-  // Save user ID
-Future<void> saveUserId(String userId) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString('userId', userId);
-}

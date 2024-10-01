@@ -49,6 +49,7 @@ dependencies:
   photo_gallery: ^2.2.1
   permission_handler: ^11.3.1
   flutter_background_service: ^5.0.10
+  flutter_background_service_android: ^6.2.7
   exif: ^3.3.0
   gallery_picker: ^0.5.1
   all_gallery_images: ^0.1.0+1

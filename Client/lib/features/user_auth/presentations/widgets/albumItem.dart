@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -11,18 +13,16 @@ class AlbumItem extends StatelessWidget {
   final Function() onAlbumDeleted; // Callback for album deletion
 
   const AlbumItem({
-    Key? key,
+    super.key,
     required this.albumId,
     required this.albumName,
     required this.thumbnailUrl,
     required this.onAlbumDeleted, // Update the constructor
 
-  }) : super(key: key);
+  });
 
 Future<void> onDelete(BuildContext context,String albumPath) async {
-  print('enter hereeeeeeeeeeeee');
   final uri = Uri.parse('http://192.168.1.159:5000/api/photos/delete-album');
-  print(albumPath);
   // Send the request as JSON
   var response = await http.post(
     uri,

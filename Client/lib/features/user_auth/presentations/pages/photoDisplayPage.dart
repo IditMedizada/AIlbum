@@ -203,8 +203,7 @@ Future<void> downloadPhotosToPhone(String albumName) async {
 
 void refreshGallery(String albumName) async {
   final String path = '/storage/emulated/0/Pictures/Gallery/owner/$albumName';
-  final result = await const MethodChannel('com.example.app/media').invokeMethod('refreshGallery', path);
-  print('Media scanned: $result');
+  await const MethodChannel('com.example.app/media').invokeMethod('refreshGallery', path);
 }
 
 @override
@@ -252,8 +251,7 @@ Widget build(BuildContext context) {
               if (isDownloading == 2) // State: Download Completed
                 ElevatedButton(
                   onPressed: () {
-                    // Optionally, you can add functionality here
-                    print('Download completed!'); 
+                     
                   },
                   child: const Text('Download Completed'),
                 ),

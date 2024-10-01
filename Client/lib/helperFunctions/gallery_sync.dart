@@ -61,7 +61,7 @@ class GallerySync{
 
 
   Future<void> nightModePhotoUploading(String user) async {
-
+    print("hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" + user);
     final albums = await PhotoManager.getAssetPathList(type: RequestType.image);
     AssetPathEntity? mainAlbum;
 
