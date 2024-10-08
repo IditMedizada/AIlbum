@@ -6,9 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
-import 'package:my_app/features/user_auth/presentations/pages/albums.dart';
+import 'package:my_app/features/client_side/presentations/pages/albums.dart';
 import 'dart:io';
-import 'package:my_app/features/user_auth/presentations/pages/photoDisplayPage.dart';
+import 'package:my_app/features/client_side/presentations/pages/photoDisplayPage.dart';
+import 'package:my_app/features/client_side/presentations/widgets/BaseScreen.dart';
 
 bool isLoading = false;
 
@@ -28,10 +29,12 @@ class CreateAlbumState extends State<CreateAlbum> {
   final TextEditingController albumNameController = TextEditingController();
 
   Future<void> pickImage() async {
-    final List<XFile> images = await picker.pickMultiImage();
-    setState(() {
-      selectedImages = images.map((image) => File(image.path)).toList();
-    });
+    final List<XFile>? images = await picker.pickMultiImage(); // Allow multiple images to be picked
+    if (images != null) {
+      setState(() {
+        selectedImages = images.map((image) => File(image.path)).toList(); // Add all selected images
+      });
+    }
   }
 
   Future<void> pickersubmitData() async {
@@ -41,9 +44,11 @@ class CreateAlbumState extends State<CreateAlbum> {
       );
       return;
     }
+
     final adjustedEndDate = endDate?.add(const Duration(hours: 23, minutes: 59, seconds: 59));
-    final uri = Uri.parse('http://192.168.1.8:5000/api/photos/create-album');
+    final uri = Uri.parse('http://192.168.1.15:5000/api/photos/create-album');
     String? user = FirebaseAuth.instance.currentUser?.uid;
+
     var request = http.MultipartRequest('POST', uri)
       ..fields['user'] = user ?? ''
       ..fields['startDate'] = startDate?.toIso8601String() ?? ''
@@ -52,21 +57,25 @@ class CreateAlbumState extends State<CreateAlbum> {
       ..fields['albumName'] = albumNameController.text;
 
     for (var image in selectedImages) {
-      request.files.add(await http.MultipartFile.fromPath('photos', image.path));
+      request.files.add(await http.MultipartFile.fromPath('photos', image.path)); // Upload all selected images
     }
 
     setState(() {
-      isLoading = true; // Set loading to true before the request
+      isLoading = true; // Show loading spinner while uploading
     });
+
     var response = await request.send();
 
     if (response.statusCode == 200) {
       final responseBody = await response.stream.bytesToString();
       final responseData = jsonDecode(responseBody);
-      final albumId = responseData['albumPath']; 
+      final albumId = responseData['albumPath'];
+
       setState(() {
-        isLoading = false; // Set loading to false after the request
+        isLoading = false; // Stop loading after upload
       });
+
+      // Navigate to PhotoDisplayPage after successful album creation
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -88,10 +97,10 @@ class CreateAlbumState extends State<CreateAlbum> {
         return Theme(
           data: ThemeData.light().copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Colors.blueAccent,
-              onPrimary: Colors.white,
+              primary: Colors.white, // Adjust primary color
+              onPrimary: Colors.blueAccent, // Adjust text color on primary button (OK)
               surface: Colors.blueAccent,
-              onSurface: Colors.black,
+              onSurface: Colors.white, // Text color for Cancel button
             ),
             dialogBackgroundColor: Colors.white,
           ),
@@ -99,6 +108,7 @@ class CreateAlbumState extends State<CreateAlbum> {
         );
       },
     );
+    
     if (picked != null && picked != (isStartDate ? startDate : endDate)) {
       setState(() {
         if (isStartDate) {
@@ -109,15 +119,13 @@ class CreateAlbumState extends State<CreateAlbum> {
       });
     }
   }
-
-  @override
-  Widget build(BuildContext context) {
- 
-
-    return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+@override
+Widget build(BuildContext context) {
+  return BaseScreen( // Wrapping with BaseScreen to apply the animated background
+    child: Scaffold(
+      backgroundColor: Colors.transparent, // Make the background transparent to see the animated background
       appBar: AppBar(
-        backgroundColor: Colors.lightBlueAccent,
+        backgroundColor: Colors.blueAccent,
         title: const Text(
           'Create New Album',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
@@ -162,15 +170,21 @@ class CreateAlbumState extends State<CreateAlbum> {
             selectedImages.isNotEmpty
                 ? _buildImageGrid()
                 : _buildEmptyImageContainer(),
-            const SizedBox(height: 30), // Increased spacing
+            const SizedBox(height: 30),
             Center(
               child: FloatingActionButton.extended(
                 onPressed: pickImage,
                 icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text('Select Photos', style: TextStyle(fontSize: 16)),
+                label: const Text(
+                  'Select Photos',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
                 backgroundColor: Colors.blueAccent,
                 elevation: 5,
-                heroTag: 'selectPhotosFAB',  // Unique heroTag for this FAB
+                heroTag: 'selectPhotosFAB',
               ),
             ),
             const SizedBox(height: 30),
@@ -180,8 +194,8 @@ class CreateAlbumState extends State<CreateAlbum> {
             Slider(
               value: photoCount.toDouble(),
               min: 1,
-              max: 100,
-              divisions: 99,
+              max: selectedImages.length > 100 ? selectedImages.length.toDouble() : 100,
+              divisions: selectedImages.length > 100 ? selectedImages.length : 99,
               activeColor: Colors.blueAccent,
               inactiveColor: Colors.grey.shade300,
               label: photoCount.toString(),
@@ -198,18 +212,24 @@ class CreateAlbumState extends State<CreateAlbum> {
                   : FloatingActionButton.extended(
                       onPressed: pickersubmitData,
                       icon: const Icon(Icons.check, color: Colors.white),
-                      label: const Text('Create Album', style: TextStyle(fontSize: 16)),
+                      label: const Text(
+                        'Create Album',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
                       backgroundColor: Colors.blueAccent,
                       elevation: 5,
-                      heroTag: 'createAlbumFAB',  // Unique heroTag for this FAB
+                      heroTag: 'createAlbumFAB',
                     ),
             ),
           ],
         ),
       ),
-    );
-  }
-
+    ),
+  );
+}
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
@@ -274,15 +294,25 @@ class CreateAlbumState extends State<CreateAlbum> {
 
   Widget _buildDateButton(String label, DateTime? date, bool isStartDate) {
     return Expanded(
-      child: FloatingActionButton.extended(
-        onPressed: () => selectDate(context, isStartDate),
-        label: Text(
-          date == null ? label : DateFormat('yyyy-MM-dd').format(date),
-          style: const TextStyle(color: Colors.white),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blueAccent,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
-        backgroundColor: Colors.blueAccent,
-        icon: const Icon(Icons.calendar_today, color: Colors.white),
-        heroTag: isStartDate ? 'startDateFAB' : 'endDateFAB',  // Unique heroTag for each FAB
+        onPressed: () => selectDate(context, isStartDate),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              date == null ? label : DateFormat('yyyy-MM-dd').format(date),
+              style: const TextStyle(color: Colors.white),
+            ),
+            const Icon(Icons.calendar_today, color: Colors.white),
+          ],
+        ),
       ),
     );
   }

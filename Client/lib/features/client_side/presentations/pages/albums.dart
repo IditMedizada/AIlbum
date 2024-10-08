@@ -1,17 +1,19 @@
 // ignore_for_file: use_build_context_synchronously, avoid_print
 
 import 'dart:convert';
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:my_app/features/user_auth/presentations/pages/createAlbum.dart';
-import 'package:my_app/features/user_auth/presentations/pages/userId.dart';
-import 'package:my_app/features/user_auth/presentations/widgets/albumItem.dart';
-import 'package:my_app/features/user_auth/presentations/widgets/photoItem.dart';
+import 'package:my_app/features/client_side/presentations/pages/createAlbum.dart';
+import 'package:my_app/features/client_side/presentations/pages/userId.dart';
+import 'package:my_app/features/client_side/presentations/widgets/BaseScreen.dart';
+import 'package:my_app/features/client_side/presentations/widgets/albumItem.dart';
 import 'package:my_app/main.dart';
-import 'package:my_app/features/user_auth/presentations/pages/login_page.dart';
+import 'package:my_app/features/client_side/presentations/pages/login_page.dart';
 import 'package:http/http.dart' as http;
+import 'package:photo_manager/photo_manager.dart';
 
 class Albums extends StatefulWidget {
   const Albums({super.key});
@@ -23,45 +25,37 @@ class Albums extends StatefulWidget {
 class AlbumState extends State<Albums> {
   final FirebaseStorage storage = FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
   List<Map<String, dynamic>> albumData = [];
-  List<String> photoUrls = []; // List to hold photo URLs
-  bool isChecked = false;  // Create a state variable to track whether the checkbox is checked
-  bool isLoading = true; // New variable to track loading state
-  double loadingProgress = 0.0; // New variable for loading progress
+  List<File> photoUrls = [];
+  bool isChecked = false;
+  bool isLoading = true;
+  double loadingProgress = 0.0;
   int count = 1;
 
   @override
   void initState() {
     super.initState();
-
-    // Listen to data sent from the background service
     FlutterBackgroundService().on('sync_complete').listen((data) {
       if (data?["sync_complete"] == true) {
-        isButtonEnabledNotifier.value = true; // Enable button
+        isButtonEnabledNotifier.value = true;
       }
     });
-
-    fetchPhotos();
+    fetchPhotosFromGallery();
     fetchAlbums();
   }
 
-  // Fetch albums from Firebase Storage
   Future<void> fetchAlbums() async {
     try {
       count = 1;
       String? userId = FirebaseAuth.instance.currentUser?.uid;
-      String albumsPath = '$userId/user_albums/'; // Define the path
+      String albumsPath = '$userId/user_albums/';
 
-      // Get the albums (folders) under the user's albums folder
       final ListResult albums = await storage.ref(albumsPath).listAll();
-
       List<Map<String, dynamic>> tempAlbumData = [];
 
-      // Loop through each folder (album)
       for (var albumRef in albums.prefixes) {
         String albumName = albumRef.name;
         String albumId = '';
         if (albumName.contains('#')) {
-          // Extract substring after the '#'
           albumId = albumName;
           albumName = albumName.split('#').last;
           if (albumName == 'default') {
@@ -69,17 +63,14 @@ class AlbumState extends State<Albums> {
             count++;
           }
         } else {
-          albumName = ""; // Default to the regular name if no '#' is found
+          albumName = "";
         }
         String thumbnailUrl = '';
-
-        // Fetch one image from the album to use as a thumbnail (first image in the folder)
         final ListResult photos = await albumRef.listAll();
         if (photos.items.isNotEmpty) {
           thumbnailUrl = await photos.items.first.getDownloadURL();
         }
 
-        // Add album data
         tempAlbumData.add({
           'albumId': albumId,
           'albumName': albumName,
@@ -88,46 +79,82 @@ class AlbumState extends State<Albums> {
       }
 
       setState(() {
-        albumData = tempAlbumData; // Update the state with the album data
+        albumData = tempAlbumData;
       });
     } catch (e) {
       print('Error fetching albums: $e');
     }
   }
+ // Fetching photos from the device's gallery
+  Future<void> fetchPhotosFromGallery() async {
+    final albums = await PhotoManager.getAssetPathList(type: RequestType.image);
+    AssetPathEntity? mainAlbum;
 
-  // Fetch all photos from Firebase Storage
-  Future<void> fetchPhotos() async {
-    try {
-      String? userId = FirebaseAuth.instance.currentUser?.uid;
-      String photosPath = '$userId/user_photos/'; // Define the path to photos
-
-      // Get all photos from the photos folder
-      final ListResult photos = await storage.ref(photosPath).listAll();
-
-      List<String> tempPhotoUrls = [];
-
-      for (var photoRef in photos.items) {
-        // Fetch the download URL for each photo
-        String photoUrl = await photoRef.getDownloadURL();
-        tempPhotoUrls.add(photoUrl); // Add URL to list
-
-        setState(() {
-          photoUrls = tempPhotoUrls; // Update the state with photo URLs
-        });
+    // Finding the album (if exists)
+    for (final album in albums) {
+      if (album.name == "test") {
+        mainAlbum = album;
+        break;
       }
-    } catch (e, stacktrace) {
-      print('Error fetching photos: $e');
-      print(stacktrace);
-      // Optionally, show an error dialog or message to the user
+    }
+
+    if (mainAlbum != null) {
+      int start = 0;
+      const pageSize = 10;
+
+      while (true) {
+        // Fetch a batch of photos
+        final photos = await mainAlbum.getAssetListRange(start: start, end: start + pageSize);
+        if (photos.isEmpty) break;
+
+        final uploadTasks = photos.map((photo) async {
+          final file = await photo.file;
+          if (file != null) {
+            setState(() {
+              photoUrls.add(file); // Add the file to the list to display
+            });
+          }
+        }).toList();
+
+        // Wait for all to finish
+        await Future.wait(uploadTasks);
+        start += pageSize;
+      }
+
+      setState(() {
+        isLoading = false;
+      });
+    } else {
+      print("Main album not found");
     }
   }
 
-  // Method to send request to server to create default albums
+  // Future<void> fetchPhotos() async {
+  //   try {
+  //     String? userId = FirebaseAuth.instance.currentUser?.uid;
+  //     String photosPath = '$userId/user_photos/';
+
+  //     final ListResult photos = await storage.ref(photosPath).listAll();
+  //     List<String> tempPhotoUrls = [];
+
+  //     for (var photoRef in photos.items) {
+  //       String photoUrl = await photoRef.getDownloadURL();
+  //       tempPhotoUrls.add(photoUrl);
+
+  //       setState(() {
+  //         photoUrls = tempPhotoUrls;
+  //       });
+  //     }
+  //   } catch (e, stacktrace) {
+  //     print('Error fetching photos: $e');
+  //     print(stacktrace);
+  //   }
+  // }
+
   Future<void> createDefaultAlbums() async {
     try {
-      final uri = Uri.parse('http://192.168.1.159:5000/api/photos/create-default-face-albums');
+      final uri = Uri.parse('http://192.168.1.15:5000/api/photos/create-default-face-albums');
       String? user = FirebaseAuth.instance.currentUser?.uid;
-      // Send the request as JSON
       var response = await http.post(
         uri,
         headers: {
@@ -140,6 +167,7 @@ class AlbumState extends State<Albums> {
 
       if (response.statusCode == 200) {
         fetchAlbums();
+        showSnackbar('Default albums created!');
       }
     } catch (e, stacktrace) {
       print('Error creating default albums: $e');
@@ -147,31 +175,41 @@ class AlbumState extends State<Albums> {
     }
   }
 
+  void showSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      duration: const Duration(seconds: 2),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BaseScreen(
+      child: Scaffold(
+
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        leading: const Padding(
-          padding: EdgeInsets.all(5.0),
-          child: Image(
-            image: AssetImage('assets/icon.png'),
-            width: 100.0,  // Adjust the size as needed
-            height: 100.0,
+        backgroundColor: Colors.blueAccent,
+        title: const Text(
+          'My Albums',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        // Add the logout icon button to the right side of the AppBar
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout), // Logout icon
+            icon: const Icon(Icons.logout),
+            color: Colors.white,
             onPressed: () async {
               try {
                 await resetUserId();
                 FlutterBackgroundService().invoke("stopService");
-                // Navigate to the sign-in page after signing out
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()), // SignIn is your login page
-                  (route) => false, // Remove all routes from the stack
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                  (route) => false,
                 );
               } catch (e, stacktrace) {
                 print('Error signing out: $e');
@@ -183,7 +221,6 @@ class AlbumState extends State<Albums> {
       ),
       body: Column(
         children: [
-          // Button for creating a new album
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ValueListenableBuilder<bool>(
@@ -195,7 +232,6 @@ class AlbumState extends State<Albums> {
                       onPressed: isButtonEnabled
                           ? () {
                               try {
-                                // Navigate to CreateAlbum after the button is enabled
                                 Navigator.pushAndRemoveUntil(
                                   context,
                                   MaterialPageRoute(builder: (context) => const CreateAlbum()),
@@ -208,15 +244,25 @@ class AlbumState extends State<Albums> {
                             }
                           : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isButtonEnabled ? Colors.blue : Colors.grey,
+                        backgroundColor: isButtonEnabled ? Colors.blueAccent : Colors.grey,
                         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                      ), // Disable button if isButtonEnabled is false
-                      child: const Text('Create New Album'),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0),
+                        ),
+                        elevation: 5,
+                      ),
+                      child: const Text(
+                        'Create New Album',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 10), // Add some spacing
-
-                    // Checkbox for creating default albums
+                    const SizedBox(height: 10),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Checkbox(
                           value: isChecked,
@@ -227,13 +273,15 @@ class AlbumState extends State<Albums> {
                                   });
 
                                   if (isChecked) {
-                                    // Send a request to the server to create default albums
                                     await createDefaultAlbums();
                                   }
                                 }
-                              : null, // Disable checkbox if isButtonEnabled is false
+                              : null,
                         ),
-                        const Text('Create Default Albums'),
+                        const Text(
+                          'Create Default Albums',
+                          style: TextStyle(fontSize: 16),
+                        ),
                       ],
                     ),
                   ],
@@ -241,11 +289,18 @@ class AlbumState extends State<Albums> {
               },
             ),
           ),
-
-          // Display albums in a grid view
           Expanded(
             child: albumData.isEmpty
-                ? const Center(child: Text('No albums found'))
+                ? const Center(
+                    child: Text(
+                      'No albums found',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  )
                 : GridView.builder(
                     padding: const EdgeInsets.all(8),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -260,19 +315,21 @@ class AlbumState extends State<Albums> {
                         albumId: album['albumId'],
                         albumName: album['albumName'],
                         thumbnailUrl: album['thumbnailUrl'],
-                        onAlbumDeleted: fetchAlbums, // Pass the fetchAlbums method
+                        onAlbumDeleted: fetchAlbums,
                       );
                     },
                   ),
           ),
-
           const Divider(
-            thickness: 4, // Adjust thickness value as needed
+            thickness: 4,
           ),
-          // Display all photos in a grid view
           Expanded(
             child: photoUrls.isEmpty
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                    ),
+                  )
                 : GridView.builder(
                     padding: const EdgeInsets.all(8),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -282,14 +339,16 @@ class AlbumState extends State<Albums> {
                     ),
                     itemCount: photoUrls.length,
                     itemBuilder: (context, index) {
-                      return PhotoItem(
-                        imageUrl: photoUrls[index],
+                    return Image.file(
+                        photoUrls[index],
+                        fit: BoxFit.cover,
                       );
                     },
                   ),
           ),
         ],
       ),
+      )
     );
   }
 }

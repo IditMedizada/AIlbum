@@ -51,7 +51,7 @@ class GallerySync{
       }
 
       // Notify the server after all photos are uploaded
-      final uri = Uri.parse('http://192.168.1.159:5000/api/photos/process-photos');
+      final uri = Uri.parse('http://192.168.1.15:5000/api/photos/process-photos');
       await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'user': user}));
       print("All photos uploaded and server notified - gallery sync.");
     } else {
@@ -98,7 +98,7 @@ class GallerySync{
   
       // Notify the server after all photos are uploaded
       print("send night mode to serverrrrr");
-      final uri = Uri.parse('http://192.168.1.159:5000/api/photos/process-photos');
+      final uri = Uri.parse('http://192.168.1.15:5000/api/photos/process-photos');
       await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'user': user}));
 
       print("All photos uploaded and server notified - night mode");

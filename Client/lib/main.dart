@@ -5,8 +5,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:my_app/features/app/splash_screen/splash_screen.dart';
-import 'package:my_app/features/user_auth/presentations/pages/login_page.dart';
-import 'package:my_app/helperFunctions/gallery_sync.dart';
+import 'package:my_app/features/client_side/presentations/pages/login_page.dart';
+import 'package:my_app/features/client_side/presentations/pages/gallery_sync.dart';
 
 ValueNotifier<bool> isButtonEnabledNotifier = ValueNotifier(true); // Button state notifier
 

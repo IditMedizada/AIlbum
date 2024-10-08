@@ -1,8 +1,9 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:my_app/features/user_auth/presentations/pages/albums.dart';
-import 'package:my_app/features/user_auth/presentations/pages/userId.dart';
+import 'package:my_app/features/client_side/presentations/pages/albums.dart';
+import 'package:my_app/features/client_side/presentations/pages/userId.dart';
+import 'package:my_app/features/client_side/presentations/widgets/BaseScreen.dart';
 
 class SplashScreen extends StatefulWidget {
   final Widget? child;
@@ -37,29 +38,17 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Background image
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/backgroud.jpg'), // Change to your image path
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
+    return const BaseScreen(
+    
+    child:
           // Icon in the center
-          const Center(
+          Center(
           child: Image(
             image: AssetImage('assets/icon.png'),
             width: 200.0,  // Adjust the size as needed
             height: 200.0,
           ),
           ),
-        ],
-      ),
     );
   }
 }
