@@ -49,6 +49,7 @@ class AlbumController {
 
 
     static async createAlbum(req, res) {
+        console.log("createAlbum",req.body);
         try {
             const { user, startDate, endDate, numPhotos , albumName } = req.body;
             const files = req.files; // Files array from the request
