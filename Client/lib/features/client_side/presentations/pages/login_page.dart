@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:my_app/features/client_side/presentations/pages/albums.dart';
+import 'package:my_app/features/client_side/presentations/pages/gallery_sync.dart';
 import 'package:my_app/features/client_side/presentations/pages/sign_up_page.dart';
 import 'package:my_app/features/client_side/presentations/pages/userId.dart';
 import 'package:my_app/features/client_side/presentations/widgets/BaseScreen.dart';
@@ -49,7 +50,7 @@ class LoginPageState extends State<LoginPage> {
               const SizedBox(height: 50),
               const Text(
                 "Welcome Back",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 91, 122, 152)),
               ),
               const SizedBox(height: 30),
               FormContainerWidget(
@@ -81,7 +82,7 @@ class LoginPageState extends State<LoginPage> {
                               color: Colors.white,
                             )
                           : const Text(
-                              "Sign Up",
+                              "Login",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -95,7 +96,7 @@ class LoginPageState extends State<LoginPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Don't have an account?", style: TextStyle(color: Colors.black)),
+                  const Text("Don't have an account?", style: TextStyle(color: Color.fromARGB(255, 91, 122, 152))),
                   const SizedBox(width: 5),
                   GestureDetector(
                     onTap: () {
@@ -139,6 +140,17 @@ class LoginPageState extends State<LoginPage> {
         await initializeService();
         await Future.delayed(const Duration(seconds: 1));
         FlutterBackgroundService().invoke('night_mode', {"userId": userId});
+
+        bool? isProcess = await GallerySync().checkProcessedStatus(userId);
+        if(isProcess != null && isProcess){
+          print(isProcess);
+          isButtonEnabledNotifier.value = true;
+          // FlutterBackgroundService().invoke('sync_complete', {"sync_complete": true});
+        }else{
+          print("falseeee");
+          isButtonEnabledNotifier.value = false;
+          // FlutterBackgroundService().invoke('sync_complete', {"sync_complete": false});
+        }
       }
 
       Navigator.pushAndRemoveUntil(

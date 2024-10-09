@@ -37,6 +37,15 @@ class CreateAlbumState extends State<CreateAlbum> {
     }
   }
 
+  Future<void> takePhoto() async {
+    final XFile? photo = await picker.pickImage(source: ImageSource.camera); // Take a photo using the camera
+    if (photo != null) {
+      setState(() {
+        selectedImages.add(File(photo.path)); // Add the taken photo to the list
+      });
+    }
+  }
+
   Future<void> pickersubmitData() async {
     if (selectedImages.isEmpty || startDate == null || endDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -119,117 +128,104 @@ class CreateAlbumState extends State<CreateAlbum> {
       });
     }
   }
-@override
-Widget build(BuildContext context) {
-  return BaseScreen( // Wrapping with BaseScreen to apply the animated background
-    child: Scaffold(
-      backgroundColor: Colors.transparent, // Make the background transparent to see the animated background
-      appBar: AppBar(
-        backgroundColor: Colors.blueAccent,
-        title: const Text(
-          'Create New Album',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+
+  @override
+  Widget build(BuildContext context) {
+    return BaseScreen( // Wrapping with BaseScreen to apply the animated background
+      child: Scaffold(
+        backgroundColor: Colors.transparent, // Make the background transparent to see the animated background
+        appBar: AppBar(
+          backgroundColor: Colors.blueAccent,
+          title: const Text(
+            'Create New Album',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const Albums()),
+                (route) => false,
+              );
+            },
+          ),
         ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const Albums()),
-              (route) => false,
-            );
-          },
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            _buildSectionTitle('Album Title'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: albumNameController,
-              decoration: InputDecoration(
-                hintText: 'Enter album name',
-                hintStyle: const TextStyle(color: Colors.grey),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-              ),
-            ),
-            const SizedBox(height: 20),
-            _buildSectionTitle('Selected Images'),
-            const SizedBox(height: 8),
-            selectedImages.isNotEmpty
-                ? _buildImageGrid()
-                : _buildEmptyImageContainer(),
-            const SizedBox(height: 30),
-            Center(
-              child: FloatingActionButton.extended(
-                onPressed: pickImage,
-                icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text(
-                  'Select Photos',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              _buildSectionTitle('Album Title'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: albumNameController,
+                decoration: InputDecoration(
+                  hintText: 'Enter album name',
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
                   ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                 ),
-                backgroundColor: Colors.blueAccent,
-                elevation: 5,
-                heroTag: 'selectPhotosFAB',
               ),
-            ),
-            const SizedBox(height: 30),
-            _buildDateSelectors(),
-            const SizedBox(height: 30),
-            _buildSectionTitle('Number of Photos'),
-            Slider(
-              value: photoCount.toDouble(),
-              min: 1,
-              max: selectedImages.length > 100 ? selectedImages.length.toDouble() : 100,
-              divisions: selectedImages.length > 100 ? selectedImages.length : 99,
-              activeColor: Colors.blueAccent,
-              inactiveColor: Colors.grey.shade300,
-              label: photoCount.toString(),
-              onChanged: (value) {
-                setState(() {
-                  photoCount = value.toInt();
-                });
-              },
-            ),
-            const SizedBox(height: 40),
-            Center(
-              child: isLoading
-                  ? const CircularProgressIndicator(color: Colors.blueAccent)
-                  : FloatingActionButton.extended(
-                      onPressed: pickersubmitData,
-                      icon: const Icon(Icons.check, color: Colors.white),
-                      label: const Text(
-                        'Create Album',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
+              const SizedBox(height: 20),
+              _buildSectionTitle('Selected Images'),
+              const SizedBox(height: 8),
+              selectedImages.isNotEmpty
+                  ? _buildImageGrid()
+                  : _buildEmptyImageContainer(),
+              const SizedBox(height: 30),
+              _buildActionButtons(), // Add action buttons
+              const SizedBox(height: 30),
+              _buildDateSelectors(),
+              const SizedBox(height: 30),
+              _buildSectionTitle('Number of Photos'),
+              Slider(
+                value: photoCount.toDouble(),
+                min: 1,
+                max: selectedImages.length > 100 ? selectedImages.length.toDouble() : 100,
+                divisions: selectedImages.length > 100 ? selectedImages.length : 99,
+                activeColor: Colors.blueAccent,
+                inactiveColor: Colors.grey.shade300,
+                label: photoCount.toString(),
+                onChanged: (value) {
+                  setState(() {
+                    photoCount = value.toInt();
+                  });
+                },
+              ),
+              const SizedBox(height: 40),
+              Center(
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.blueAccent)
+                    : FloatingActionButton.extended(
+                        onPressed: pickersubmitData,
+                        icon: const Icon(Icons.check, color: Colors.white),
+                        label: const Text(
+                          'Create Album',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
                         ),
+                        backgroundColor: Colors.blueAccent,
+                        elevation: 5,
+                        heroTag: 'createAlbumFAB',
                       ),
-                      backgroundColor: Colors.blueAccent,
-                      elevation: 5,
-                      heroTag: 'createAlbumFAB',
-                    ),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
@@ -314,6 +310,42 @@ Widget build(BuildContext context) {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        FloatingActionButton.extended(
+          onPressed: pickImage,
+          icon: const Icon(Icons.photo_library, color: Colors.white),
+          label: const Text(
+            'Select Photos',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white,
+            ),
+          ),
+          backgroundColor: Colors.blueAccent,
+          elevation: 5,
+          heroTag: 'selectPhotosFAB',
+        ),
+        FloatingActionButton.extended(
+          onPressed: takePhoto,
+          icon: const Icon(Icons.camera_alt, color: Colors.white),
+          label: const Text(
+            'Take Photo',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white,
+            ),
+          ),
+          backgroundColor: Colors.blueAccent,
+          elevation: 5,
+          heroTag: 'takePhotoFAB',
+        ),
+      ],
     );
   }
 }

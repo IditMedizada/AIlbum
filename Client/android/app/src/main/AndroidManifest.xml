@@ -17,7 +17,7 @@
 
     <application
         android:enableOnBackInvokedCallback="true"
-        android:label="my_app"
+        android:label="AI-lbum"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

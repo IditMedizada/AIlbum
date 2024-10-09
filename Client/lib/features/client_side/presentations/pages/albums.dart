@@ -35,8 +35,11 @@ class AlbumState extends State<Albums> {
   void initState() {
     super.initState();
     FlutterBackgroundService().on('sync_complete').listen((data) {
+      print("hiii i am hereee!");
       if (data?["sync_complete"] == true) {
         isButtonEnabledNotifier.value = true;
+      }else{
+        isButtonEnabledNotifier.value = false;
       }
     });
     fetchPhotosFromGallery();
@@ -129,27 +132,7 @@ class AlbumState extends State<Albums> {
     }
   }
 
-  // Future<void> fetchPhotos() async {
-  //   try {
-  //     String? userId = FirebaseAuth.instance.currentUser?.uid;
-  //     String photosPath = '$userId/user_photos/';
 
-  //     final ListResult photos = await storage.ref(photosPath).listAll();
-  //     List<String> tempPhotoUrls = [];
-
-  //     for (var photoRef in photos.items) {
-  //       String photoUrl = await photoRef.getDownloadURL();
-  //       tempPhotoUrls.add(photoUrl);
-
-  //       setState(() {
-  //         photoUrls = tempPhotoUrls;
-  //       });
-  //     }
-  //   } catch (e, stacktrace) {
-  //     print('Error fetching photos: $e');
-  //     print(stacktrace);
-  //   }
-  // }
 
   Future<void> createDefaultAlbums() async {
     try {

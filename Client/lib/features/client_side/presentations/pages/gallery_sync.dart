@@ -15,6 +15,7 @@ class GallerySync{
   final storage = FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
 
   Future<void> syncPhotos(String user) async {
+    int count = 1;
     final albums = await PhotoManager.getAssetPathList(type: RequestType.image);
     AssetPathEntity? mainAlbum;
 
@@ -35,17 +36,16 @@ class GallerySync{
         final photos = await mainAlbum.getAssetListRange(start: start, end: start + pageSize);
         if (photos.isEmpty) break;
 
-        // Process the batch of photos in parallel
-        final uploadTasks = photos.map((photo) async {
+        // Process the batch of photos sequentially
+        for (final photo in photos) {
           final file = await photo.file;
           if (file != null) {
-            // Upload each photo in parallel
-            return uploadUserPhoto(photo.title, user, file, photo.createDateTime.toIso8601String());
+            // Upload each photo sequentially
+            await uploadUserPhoto(photo.title, user, file, photo.createDateTime.toIso8601String());
+            print("photo uploaded ${count}");
+            count += 1;
           }
-        }).toList();
-
-        // Wait for all uploads in this batch to complete
-        await Future.wait(uploadTasks);
+        }
 
         start += pageSize;
       }
@@ -61,7 +61,6 @@ class GallerySync{
 
 
   Future<void> nightModePhotoUploading(String user) async {
-    print("hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" + user);
     final albums = await PhotoManager.getAssetPathList(type: RequestType.image);
     AssetPathEntity? mainAlbum;
 
@@ -139,6 +138,60 @@ class GallerySync{
     }
   }
 
- 
+ Future<void> createProcessedFile(String userId) async {
+    try {
+      // Step 1: Define the path for the processed.json file
+      Reference processedFileRef = storage.ref().child('$userId/processed.json');
 
+      // Step 2: Check if processed.json file already exists
+      try {
+        await processedFileRef.getDownloadURL();
+        print('processed.json already exists for user $userId.');
+        return; // Exit if the file already exists
+      } catch (e) {
+        print('processed.json does not exist, creating it now...');
+      }
+
+      // Step 3: If it doesn't exist, create processed.json with default content
+      Map<String, dynamic> initialData = {'processed': false};
+      String jsonData = jsonEncode(initialData);
+
+      // Upload the processed.json file to Firebase Storage
+      await processedFileRef.putString(jsonData, metadata: SettableMetadata(contentType: 'application/json'));
+
+      print('processed.json file created for user $userId with initial status.');
+    } catch (e) {
+      print('Error creating processed.json file: $e');
+    }
+  }
+
+  Future<bool?> checkProcessedStatus(String userId) async {
+    try {
+      // Step 1: Define the path for the processed.json file
+      Reference processedFileRef = storage.ref().child('$userId/processed.json');
+
+      // Step 2: Attempt to get the download URL for the processed.json file
+      String downloadUrl = await processedFileRef.getDownloadURL();
+      
+      // Step 3: Fetch the processed.json content
+      final response = await http.get(Uri.parse(downloadUrl));
+
+      // Step 4: Check if the response is successful
+      if (response.statusCode == 200) {
+        // Step 5: Parse the JSON content
+        Map<String, dynamic> jsonData = jsonDecode(response.body);
+
+        // Step 6: Return the value of the 'processed' field
+        return jsonData['processed'] as bool?;
+      } else {
+        print('Failed to load processed.json for user $userId. Status code: ${response.statusCode}');
+        return null; // Return null if the request fails
+      }
+    } catch (e) {
+      print('Error checking processed status for user $userId: $e');
+      return null; // Return null in case of an error
+    }
+  }
+
+  
 }

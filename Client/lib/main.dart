@@ -50,7 +50,6 @@ Future<void> initializeService() async {
 
   // Check if the service is already running
   bool isRunning = await service.isRunning();
-  print("sssssssssssssssssssssssssssssssssssssssssssssssssssss $isRunning");
   if (!isRunning) {
     await service.configure(
       androidConfiguration: AndroidConfiguration(
@@ -104,7 +103,7 @@ void onStart(ServiceInstance service) async {
   // Handle night mode uploads periodically
   service.on('night_mode').listen((event) async {
     final userId = event!["userId"];
-    Timer.periodic(const Duration(minutes: 2), (timer) async {
+    Timer.periodic(const Duration(hours: 23), (timer) async {
       await GallerySync().nightModePhotoUploading(userId);
     });
   });

@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:my_app/features/client_side/firebase_auth_implementation/firebase_auth_services.dart';
 import 'package:my_app/features/client_side/presentations/pages/login_page.dart';
+import 'package:my_app/features/client_side/presentations/pages/userId.dart';
 import 'package:my_app/features/client_side/presentations/widgets/BaseScreen.dart';
 import 'package:my_app/features/client_side/presentations/widgets/form_container_widget.dart';
+import 'package:my_app/features/client_side/presentations/pages/gallery_sync.dart';
 import 'package:my_app/main.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../global/common/toast.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -56,11 +57,8 @@ class _SignUpPageState extends State<SignUpPage> {
                 // Title
                 const Text(
                   "Create Your Account",
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 91, 122, 152)),
+
                 ),
                 const SizedBox(height: 30),
 
@@ -132,7 +130,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   children: [
                     const Text(
                       "Already have an account?",
-                      style: TextStyle(color: Colors.black),
+                      style: TextStyle(color: Color.fromARGB(255, 91, 122, 152)),
                     ),
                     const SizedBox(width: 5),
                     GestureDetector(
@@ -185,9 +183,11 @@ class _SignUpPageState extends State<SignUpPage> {
     if (user != null) {
       showToast(message: 'User successfully created');
       final String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('userId', userId);
-      isButtonEnabledNotifier.value = false;
+      await GallerySync().createProcessedFile(userId);
+      await saveUserId(userId);
+      await initializeService();
+      await Future.delayed(const Duration(seconds: 1));
+      // isButtonEnabledNotifier.value = false;
 
       // Start background service to upload photos
       FlutterBackgroundService().invoke('upload_photos', {
@@ -204,3 +204,5 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 }
+
+
