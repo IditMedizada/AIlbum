@@ -83,8 +83,11 @@ async function processUserPhotos(req, res, user) {
             await FirebaseService.updatePhotoMetadata(filePath, faceIds);
             console.log(`Metadata updated for file: ${filePath}`);
         }
-
+        await updateProcessedFile(user, true); // Update processed.json to true
+        console.log(`User metadata updated for ${user}: { processed: true }`);
+        console.log("Photos processed successfully for user : ",user);
         res.status(200).json({ message: 'Photos processed successfully.' });
+        
     } catch (error) {
         console.error("Error during photo processing:", error);
         res.status(500).json({ message: 'An error occurred while processing photos.', error: error.message });
@@ -107,6 +110,21 @@ function processNextUserRequest(user) {
 
     const nextRequest = userQueues.get(user).shift();  // Get the next request in the queue
     PhotoController.processUploadedPhotos(nextRequest.req, nextRequest.res);
+}
+
+async function updateProcessedFile(userId, isProcessed) {
+    const userFolderPath = `${userId}/`;  // User folder path
+    const processedFile = bucket.file(`${userFolderPath}processed.json`);
+
+    // Update the status in processed.json
+    const status = JSON.stringify({ processed: isProcessed });
+    await processedFile.save(status, {
+        metadata: {
+            contentType: 'application/json',
+        },
+    });
+
+    console.log(`Processed file updated for ${userId} with status: ${status}`);
 }
 
 module.exports = PhotoController;
