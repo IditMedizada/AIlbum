@@ -1,5 +1,7 @@
 
 
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 
 
@@ -31,12 +33,12 @@ class FormContainerWidget extends StatefulWidget {
 
 
   @override
-  _FormContainerWidgetState createState() =>  _FormContainerWidgetState();
+  FormContainerWidgetState createState() =>  FormContainerWidgetState();
 }
 
-class _FormContainerWidgetState extends State<FormContainerWidget> {
+class FormContainerWidgetState extends State<FormContainerWidget> {
 
-  bool _obscureText = true;
+  bool obscureText = true;
 
 
   @override
@@ -53,7 +55,7 @@ class _FormContainerWidgetState extends State<FormContainerWidget> {
         controller: widget.controller,
         keyboardType: widget.inputType,
         key: widget.fieldKey,
-        obscureText: widget.isPasswordField == true? _obscureText : false,
+        obscureText: widget.isPasswordField == true? obscureText : false,
         onSaved: widget.onSaved,
         validator: widget.validator,
         onFieldSubmitted: widget.onFieldSubmitted,
@@ -65,11 +67,11 @@ class _FormContainerWidgetState extends State<FormContainerWidget> {
           suffixIcon:  GestureDetector(
             onTap: () {
               setState(() {
-                _obscureText = !_obscureText;
+                obscureText = !obscureText;
               });
             },
             child:
-            widget.isPasswordField==true? Icon(_obscureText ? Icons.visibility_off : Icons.visibility, color: _obscureText == false ? Colors.blue : Colors.grey,) : const Text(""),
+            widget.isPasswordField==true? Icon(obscureText ? Icons.visibility_off : Icons.visibility, color: obscureText == false ? Colors.blue : Colors.grey,) : const Text(""),
           ),
         ),
       ),
