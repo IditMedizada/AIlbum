@@ -1,7 +1,8 @@
 const faceapi = require('face-api.js');
+//A library that provides deep learning-based face detection, face landmark detection,
+// and face recognition capabilities.
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const FirebaseService = require('../services/firebaseServices');
 const { Canvas, Image, ImageData } = require('canvas');
 faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 const FaceEncodingModel = require('../models/faceEncodingModel');
@@ -9,9 +10,13 @@ const FaceEncodingModel = require('../models/faceEncodingModel');
 // Load models
 const MODEL_URL = path.join(__dirname, '../models');
 faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
+//This is used to "monkey patch" (i.e., extend) the environment so that face-api.js
+// can work with the Canvas, Image, and ImageData objects from the canvas library.
+// This makes the face-api.js library compatible with Node.js 
+//(since it's designed to work with HTML elements in browsers).
 
 class FaceService {
-    // Load models for face detection and recognition
+    // Loads the pre-trained face detection and recognition models from the local directory.
     static async loadModels() {
         await Promise.all([
             faceapi.nets.tinyFaceDetector.loadFromDisk(MODEL_URL),

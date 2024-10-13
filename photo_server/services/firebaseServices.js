@@ -1,9 +1,9 @@
-const { bucket } = require('../firebaseConfig');
-const path = require('path');
-const os = require('os');
-const fs = require('fs');
+const { bucket } = require('../firebaseConfig'); // Importing the Firebase Storage bucket configuration
+const path = require('path'); // Node.js module for handling file paths
+const os = require('os'); // Node.js module for OS-specific operations
+const fs = require('fs'); // Node.js module for file system operations
 
-
+// FirebaseService class: Contains methods to interact with Firebase Storage for photo processing and metadata management
 class FirebaseService {
     // Method to check if the photo has already been processed
     static async isPhotoProcessed(filePath) {
@@ -18,7 +18,7 @@ class FirebaseService {
 
     static async getAllFaceEncodings(user) {
         const faceEncodingsFolder = `${user}/face_encodings/`;
-        const [files] = await bucket.getFiles({ prefix: faceEncodingsFolder });
+        const [files] = await bucket.getFiles({ prefix: faceEncodingsFolder }); // Fetch all files in the folder
 
         const faceEncodings = await Promise.all(
             files.map(async (file) => {
