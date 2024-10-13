@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously, avoid_print
+// ignore_for_file: use_build_context_synchronously, avoid_print, file_names
 
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,7 +10,7 @@ import 'package:my_app/features/client_side/presentations/pages/albums.dart';
 import 'dart:io';
 import 'package:my_app/features/client_side/presentations/pages/photoDisplayPage.dart';
 import 'package:my_app/features/client_side/presentations/widgets/BaseScreen.dart';
-
+// Global loading state for the album creation process
 bool isLoading = false;
 
 class CreateAlbum extends StatefulWidget {
@@ -21,24 +21,29 @@ class CreateAlbum extends StatefulWidget {
 }
 
 class CreateAlbumState extends State<CreateAlbum> {
+  // Image picker instance
   final ImagePicker picker = ImagePicker();
+  // List to store selected images
   List<File> selectedImages = [];
   DateTime? startDate;
   DateTime? endDate;
+  // Counter for the number of photos you want for the album creation
   int photoCount = 1;
+  // Controller for album name input
   final TextEditingController albumNameController = TextEditingController();
-
+  
+  // Function to pick multiple images from the gallery
   Future<void> pickImage() async {
-    final List<XFile>? images = await picker.pickMultiImage(); // Allow multiple images to be picked
-    if (images != null) {
-      setState(() {
-        selectedImages = images.map((image) => File(image.path)).toList(); // Add all selected images
-      });
-    }
+    // Allow multiple images to be picked
+    final List<XFile> images = await picker.pickMultiImage(); // Allow multiple images to be picked
+    setState(() {
+      selectedImages = images.map((image) => File(image.path)).toList(); // Add all selected images
+    });
   }
 
+  // Function to take a photo using the camera
   Future<void> takePhoto() async {
-    final XFile? photo = await picker.pickImage(source: ImageSource.camera); // Take a photo using the camera
+    final XFile? photo = await picker.pickImage(source: ImageSource.camera); 
     if (photo != null) {
       setState(() {
         selectedImages.add(File(photo.path)); // Add the taken photo to the list
@@ -46,6 +51,7 @@ class CreateAlbumState extends State<CreateAlbum> {
     }
   }
 
+  // Function to submit the selected data to the server
   Future<void> pickersubmitData() async {
     if (selectedImages.isEmpty || startDate == null || endDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -54,8 +60,10 @@ class CreateAlbumState extends State<CreateAlbum> {
       return;
     }
 
+    // Adjust end date to include the entire day
     final adjustedEndDate = endDate?.add(const Duration(hours: 23, minutes: 59, seconds: 59));
-    final uri = Uri.parse('http://192.168.1.15:5000/api/photos/create-album');
+    final uri = Uri.parse('http://192.168.1.32:5000/api/photos/create-album');
+    // Get the current user's ID
     String? user = FirebaseAuth.instance.currentUser?.uid;
 
     var request = http.MultipartRequest('POST', uri)
@@ -64,7 +72,7 @@ class CreateAlbumState extends State<CreateAlbum> {
       ..fields['endDate'] = adjustedEndDate?.toIso8601String() ?? ''
       ..fields['numPhotos'] = photoCount.toString()
       ..fields['albumName'] = albumNameController.text;
-
+    // Attach selected images to the request
     for (var image in selectedImages) {
       request.files.add(await http.MultipartFile.fromPath('photos', image.path)); // Upload all selected images
     }
@@ -78,6 +86,7 @@ class CreateAlbumState extends State<CreateAlbum> {
     if (response.statusCode == 200) {
       final responseBody = await response.stream.bytesToString();
       final responseData = jsonDecode(responseBody);
+      // Extract the album path from response
       final albumId = responseData['albumPath'];
 
       setState(() {
@@ -95,13 +104,13 @@ class CreateAlbumState extends State<CreateAlbum> {
       print("Failed to notify server");
     }
   }
-
+  // Function to select a date
   Future<void> selectDate(BuildContext context, bool isStartDate) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      firstDate: DateTime(2000),// Minimum date
+      lastDate: DateTime(2101),// Maximum date
       builder: (context, child) {
         return Theme(
           data: ThemeData.light().copyWith(
@@ -121,9 +130,9 @@ class CreateAlbumState extends State<CreateAlbum> {
     if (picked != null && picked != (isStartDate ? startDate : endDate)) {
       setState(() {
         if (isStartDate) {
-          startDate = picked;
+          startDate = picked; // Set start date
         } else {
-          endDate = picked;
+          endDate = picked; // Set end date
         }
       });
     }
@@ -131,9 +140,11 @@ class CreateAlbumState extends State<CreateAlbum> {
 
   @override
   Widget build(BuildContext context) {
-    return BaseScreen( // Wrapping with BaseScreen to apply the animated background
+    // Wrapping with BaseScreen to apply the animated background
+    return BaseScreen( 
       child: Scaffold(
-        backgroundColor: Colors.transparent, // Make the background transparent to see the animated background
+        // Make the background transparent to see the animated background
+        backgroundColor: Colors.transparent, 
         appBar: AppBar(
           backgroundColor: Colors.blueAccent,
           title: const Text(
@@ -158,7 +169,7 @@ class CreateAlbumState extends State<CreateAlbum> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              _buildSectionTitle('Album Title'),
+              buildSectionTitle('Album Title'),
               const SizedBox(height: 8),
               TextField(
                 controller: albumNameController,
@@ -175,17 +186,17 @@ class CreateAlbumState extends State<CreateAlbum> {
                 ),
               ),
               const SizedBox(height: 20),
-              _buildSectionTitle('Selected Images'),
+              buildSectionTitle('Selected Images'),
               const SizedBox(height: 8),
               selectedImages.isNotEmpty
-                  ? _buildImageGrid()
-                  : _buildEmptyImageContainer(),
+                  ? buildImageGrid()
+                  : buildEmptyImageContainer(),
               const SizedBox(height: 30),
-              _buildActionButtons(), // Add action buttons
+              buildActionButtons(), 
               const SizedBox(height: 30),
-              _buildDateSelectors(),
+              buildDateSelectors(),
               const SizedBox(height: 30),
-              _buildSectionTitle('Number of Photos'),
+              buildSectionTitle('Number of Photos'),
               Slider(
                 value: photoCount.toDouble(),
                 min: 1,
@@ -226,7 +237,7 @@ class CreateAlbumState extends State<CreateAlbum> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget buildSectionTitle(String title) {
     return Text(
       title,
       style: TextStyle(
@@ -237,7 +248,7 @@ class CreateAlbumState extends State<CreateAlbum> {
     );
   }
 
-  Widget _buildImageGrid() {
+  Widget buildImageGrid() {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -259,7 +270,7 @@ class CreateAlbumState extends State<CreateAlbum> {
     );
   }
 
-  Widget _buildEmptyImageContainer() {
+  Widget buildEmptyImageContainer() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -277,18 +288,18 @@ class CreateAlbumState extends State<CreateAlbum> {
     );
   }
 
-  Widget _buildDateSelectors() {
+  Widget buildDateSelectors() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildDateButton('Start Date', startDate, true),
+        buildDateButton('Start Date', startDate, true),
         const SizedBox(width: 10),
-        _buildDateButton('End Date', endDate, false),
+        buildDateButton('End Date', endDate, false),
       ],
     );
   }
 
-  Widget _buildDateButton(String label, DateTime? date, bool isStartDate) {
+  Widget buildDateButton(String label, DateTime? date, bool isStartDate) {
     return Expanded(
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
@@ -313,7 +324,7 @@ class CreateAlbumState extends State<CreateAlbum> {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget buildActionButtons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [

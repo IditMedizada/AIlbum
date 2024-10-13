@@ -54,12 +54,12 @@ Future<void> initializeService() async {
     await service.configure(
       androidConfiguration: AndroidConfiguration(
         onStart: onStart,
-        autoStart: true,
-        isForegroundMode: true,
-        notificationChannelId: 'my_foreground_channel',
-        initialNotificationTitle: 'Service Running',
-        initialNotificationContent: 'Service is running in the background.',
-        foregroundServiceNotificationId: 999,
+        autoStart: true,// Automatically starts the service when the app is launched
+        isForegroundMode: true,// Runs the service in foreground mode, allowing it to stay active
+        notificationChannelId: 'my_foreground_channel',// Sets the notification channel ID for foreground notifications
+        initialNotificationTitle: 'Service Running',// The title of the notification shown when the service is running
+        initialNotificationContent: 'Service is running in the background.',// The content of the notification indicating background service
+        foregroundServiceNotificationId: 999,// Unique ID for the foreground service notification
       ),
       iosConfiguration: IosConfiguration(
         onForeground: onStart,

@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -18,6 +20,7 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+  // Firebase authentication service
   final FirebaseAuthService auth = FirebaseAuthService();
   bool isSignUp = false;
   TextEditingController usernameController = TextEditingController();
@@ -27,6 +30,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   @override
   void dispose() {
+    // Dispose controllers when the widget is destroyed
     usernameController.dispose();
     emailController.dispose();
     passwordController.dispose();
@@ -97,7 +101,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 // Sign Up Button
                 GestureDetector(
                   onTap: () {
-                    signUp();
+                    signUp();// Trigger sign-up process when button is pressed
                   },
                   child: Container(
                     width: double.infinity,
@@ -109,7 +113,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     child: Center(
                       child: isSignUp
                           ? const CircularProgressIndicator(
-                              color: Colors.white,
+                              color: Colors.white,// Show a loader while signing up
                             )
                           : const Text(
                               "Sign Up",
@@ -165,7 +169,7 @@ class _SignUpPageState extends State<SignUpPage> {
     String email = emailController.text;
     String password = passwordController.text;
     String verifyPassword = verifyPasswordController.text;
-
+    // Display error if passwords don't match
     if (password != verifyPassword) {
       showToast(message: "Passwords do not match");
       return;

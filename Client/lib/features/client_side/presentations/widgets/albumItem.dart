@@ -22,7 +22,7 @@ class AlbumItem extends StatelessWidget {
   });
 
 Future<void> onDelete(BuildContext context,String albumPath) async {
-  final uri = Uri.parse('http://192.168.1.15:5000/api/photos/delete-album');
+  final uri = Uri.parse('http://192.168.1.32:5000/api/photos/delete-album');
   // Send the request as JSON
   var response = await http.post(
     uri,

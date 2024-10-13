@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -19,12 +21,17 @@ class LoginPage extends StatefulWidget {
 }
 
 class LoginPageState extends State<LoginPage> {
+  // Indicates if the login process is ongoing
   bool isSigning = false;
+  // Instance of FirebaseAuthService for authentication
   final FirebaseAuthService auth = FirebaseAuthService();
+  // Controller for email input field
   TextEditingController emailController = TextEditingController();
+  // Controller for password input field
   TextEditingController passwordController = TextEditingController();
 
   @override
+  // Clean up the controllers when the widget is disposed
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
@@ -65,9 +72,10 @@ class LoginPageState extends State<LoginPage> {
                 isPasswordField: true,
               ),
               const SizedBox(height: 30),
+              // Login button
               GestureDetector(
                   onTap: () {
-                    login();
+                    login();// Call login function when tapped
                   },
                   child: Container(
                     width: double.infinity,
@@ -77,6 +85,7 @@ class LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
+                      // Show a progress indicator while signing in
                       child: isSigning
                           ? const CircularProgressIndicator(
                               color: Colors.white,
@@ -94,11 +103,13 @@ class LoginPageState extends State<LoginPage> {
                 ),
               const SizedBox(height: 20),
               Row(
+                // Redirect to sign up page if the user does not have an account
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text("Don't have an account?", style: TextStyle(color: Color.fromARGB(255, 91, 122, 152))),
                   const SizedBox(width: 5),
                   GestureDetector(
+                    // Navigate to sign-up page and remove all previous routes
                     onTap: () {
                       Navigator.pushAndRemoveUntil(
                         context,
@@ -120,36 +131,34 @@ class LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Login function
+  // Login function to authenticate the user
   void login() async {
     setState(() {
       isSigning = true;
     });
     String email = emailController.text;
     String password = passwordController.text;
-
+    // Attempt to sign in the user using FirebaseAuthService
     User? user = await auth.signInWithEmailAndPassword(email, password);
     setState(() {
       isSigning = false;
     });
     if (user != null) {
       showToast(message: 'User successfully signed in');
+      // Get the current user's UID from FirebaseAuth
       String? userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId != null) {
+        // Save the userId locally, initialize background services, and trigger night_mode
         await saveUserId(userId);
         await initializeService();
         await Future.delayed(const Duration(seconds: 1));
         FlutterBackgroundService().invoke('night_mode', {"userId": userId});
-
+        // Check if the user's photos have already been processed
         bool? isProcess = await GallerySync().checkProcessedStatus(userId);
         if(isProcess != null && isProcess){
-          print(isProcess);
           isButtonEnabledNotifier.value = true;
-          // FlutterBackgroundService().invoke('sync_complete', {"sync_complete": true});
         }else{
-          print("falseeee");
           isButtonEnabledNotifier.value = false;
-          // FlutterBackgroundService().invoke('sync_complete', {"sync_complete": false});
         }
       }
 

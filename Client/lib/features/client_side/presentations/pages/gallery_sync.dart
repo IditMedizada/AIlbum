@@ -1,5 +1,6 @@
 // ignore_for_file: avoid_print, prefer_interpolation_to_compose_strings
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:firebase_storage/firebase_storage.dart';
@@ -10,25 +11,17 @@ import 'dart:io';
 
 
 class GallerySync{
-
+  // A list to store the selected photo files
   List<File> photoUrls = [];
+  // Firebase Storage reference
   final storage = FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
 
+  // Method to synchronize all photos from a specific album with Firebase Storage - will registaring in the first time
   Future<void> syncPhotos(String user) async {
-    int count = 1;
-    final albums = await PhotoManager.getAssetPathList(type: RequestType.image);
-    AssetPathEntity? mainAlbum;
-
-    // Finding the album
-    for (final album in albums) {
-      if (album.name == "test") {
-        mainAlbum = album;
-        break;
-      }
-    }
-
+    AssetPathEntity? mainAlbum = await findMainAlbum("test");
     if (mainAlbum != null) {
       int start = 0;
+      // Set the batch size for fetching photos
       const pageSize = 10;
 
       while (true) {
@@ -42,8 +35,6 @@ class GallerySync{
           if (file != null) {
             // Upload each photo sequentially
             await uploadUserPhoto(photo.title, user, file, photo.createDateTime.toIso8601String());
-            print("photo uploaded ${count}");
-            count += 1;
           }
         }
 
@@ -51,28 +42,21 @@ class GallerySync{
       }
 
       // Notify the server after all photos are uploaded
-      final uri = Uri.parse('http://192.168.1.15:5000/api/photos/process-photos');
-      await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'user': user}));
-      print("All photos uploaded and server notified - gallery sync.");
+      final uri = Uri.parse('http://192.168.1.32:5000/api/photos/process-photos');
+      final response = await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'user': user}));
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        print("All photos uploaded and server notified - gallery sync.");
+      } else {
+        print('Server request failed with status: ${response.statusCode}');
+      }
     } else {
       print("Main album not found");
     }
   }
 
-
+  // Method to upload photos in night mode, checking if they are already uploaded
   Future<void> nightModePhotoUploading(String user) async {
-    final albums = await PhotoManager.getAssetPathList(type: RequestType.image);
-    AssetPathEntity? mainAlbum;
-
-    // Finding the album
-    for (final album in albums) {
-      final photos = await album.getAssetListRange(start: 0, end: 1);
-      if (photos.isNotEmpty && album.name == "test") {
-        mainAlbum = album;
-        break;
-      }
-    }
-
+    AssetPathEntity? mainAlbum = await findMainAlbum("test");
     if (mainAlbum != null) {
       int start = 0;
       const pageSize = 10;
@@ -97,10 +81,13 @@ class GallerySync{
   
       // Notify the server after all photos are uploaded
       print("send night mode to serverrrrr");
-      final uri = Uri.parse('http://192.168.1.15:5000/api/photos/process-photos');
-      await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'user': user}));
-
-      print("All photos uploaded and server notified - night mode");
+      final uri = Uri.parse('http://192.168.1.32:5000/api/photos/process-photos');
+      final response = await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'user': user}));
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        print('Server request succeeded.');
+      } else {
+        print('Server request failed with status: ${response.statusCode}');
+      }
     } else {
       print("Main album not found");
     }
@@ -122,10 +109,12 @@ class GallerySync{
 
    
 
-   
+  // Method to upload a user's photo to Firebase Storage
   Future<bool> uploadUserPhoto(String? fileName, String? user, File photo, String date) async {
     try {
+      // Set the file path in storage
       Reference ref = storage.ref().child('$user/user_photos/$fileName');
+      // Add metadata with the photo's date
       UploadTask uploadTask = ref.putFile(photo, SettableMetadata(
         customMetadata: {'photoDate': date},
       ));
@@ -137,7 +126,8 @@ class GallerySync{
       return false; // Return false if an error occurs
     }
   }
-
+  
+  // Method to create a 'processed.json' file in Firebase Storage if it doesn't exist
  Future<void> createProcessedFile(String userId) async {
     try {
       // Step 1: Define the path for the processed.json file
@@ -193,5 +183,19 @@ class GallerySync{
     }
   }
 
-  
+  Future<AssetPathEntity?> findMainAlbum(String albumName)async{
+   // Fetch albums from gallery
+    final albums = await PhotoManager.getAssetPathList(type: RequestType.image);
+
+    // Finding the album (if exists)
+    for (final album in albums) {
+      if (album.name == "test") {
+        return album;
+      }
+    }
+    return null;
+
 }
+}
+
+

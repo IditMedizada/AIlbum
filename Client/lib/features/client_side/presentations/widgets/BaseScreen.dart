@@ -1,16 +1,18 @@
+// ignore_for_file: file_names
+
 import 'package:flutter/material.dart';
 import 'dart:math';
 
 class BaseScreen extends StatefulWidget {
   final Widget child;
 
-  const BaseScreen({Key? key, required this.child}) : super(key: key);
+  const BaseScreen({super.key, required this.child});
 
   @override
-  _BaseScreenState createState() => _BaseScreenState();
+  BaseScreenState createState() => BaseScreenState();
 }
 
-class _BaseScreenState extends State<BaseScreen> with SingleTickerProviderStateMixin {
+class BaseScreenState extends State<BaseScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override

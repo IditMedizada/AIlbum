@@ -7,6 +7,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:my_app/features/client_side/presentations/pages/createAlbum.dart';
+import 'package:my_app/features/client_side/presentations/pages/gallery_sync.dart';
 import 'package:my_app/features/client_side/presentations/pages/userId.dart';
 import 'package:my_app/features/client_side/presentations/widgets/BaseScreen.dart';
 import 'package:my_app/features/client_side/presentations/widgets/albumItem.dart';
@@ -23,43 +24,48 @@ class Albums extends StatefulWidget {
 }
 
 class AlbumState extends State<Albums> {
+  // Firebase Storage instance to access albums and photos
   final FirebaseStorage storage = FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
+  // List to hold album data - Id, Name, FirstImage
   List<Map<String, dynamic>> albumData = [];
+  // List to hold photos fetched from the device
   List<File> photoUrls = [];
-  bool isChecked = false;
-  bool isLoading = true;
-  double loadingProgress = 0.0;
-  int count = 1;
-
+  bool isChecked = false; // For checkbox status - difault albums creation
   @override
   void initState() {
     super.initState();
+    // Listen to background service for sync completion event - when user register in the first time
     FlutterBackgroundService().on('sync_complete').listen((data) {
-      print("hiii i am hereee!");
       if (data?["sync_complete"] == true) {
         isButtonEnabledNotifier.value = true;
       }else{
         isButtonEnabledNotifier.value = false;
       }
     });
+    // Fetch photos and albums when the widget is initialized
     fetchPhotosFromGallery();
     fetchAlbums();
   }
 
+  // Fetch user albums from Firebase Storage
   Future<void> fetchAlbums() async {
     try {
-      count = 1;
+      int count = 1;
+      // Get the current user's ID
       String? userId = FirebaseAuth.instance.currentUser?.uid;
+      // Define the path to user's albums in storage
       String albumsPath = '$userId/user_albums/';
-
+      // Fetch list of albums from storage
       final ListResult albums = await storage.ref(albumsPath).listAll();
       List<Map<String, dynamic>> tempAlbumData = [];
-
+      //These are subdirectories (or "folders") within the current directory.
       for (var albumRef in albums.prefixes) {
         String albumName = albumRef.name;
         String albumId = '';
         if (albumName.contains('#')) {
+          // retrive the album id 
           albumId = albumName;
+          // retrive the album title(name)
           albumName = albumName.split('#').last;
           if (albumName == 'default') {
             albumName = "Default Album $count";
@@ -80,7 +86,7 @@ class AlbumState extends State<Albums> {
           'thumbnailUrl': thumbnailUrl,
         });
       }
-
+      // Update the album list to display
       setState(() {
         albumData = tempAlbumData;
       });
@@ -88,23 +94,15 @@ class AlbumState extends State<Albums> {
       print('Error fetching albums: $e');
     }
   }
- // Fetching photos from the device's gallery
-  Future<void> fetchPhotosFromGallery() async {
-    final albums = await PhotoManager.getAssetPathList(type: RequestType.image);
-    AssetPathEntity? mainAlbum;
 
-    // Finding the album (if exists)
-    for (final album in albums) {
-      if (album.name == "test") {
-        mainAlbum = album;
-        break;
-      }
-    }
+  // Fetching photos from the device's gallery
+  Future<void> fetchPhotosFromGallery() async {
+    // Fetch album from gallery
+    AssetPathEntity? mainAlbum = await GallerySync().findMainAlbum("test");
 
     if (mainAlbum != null) {
       int start = 0;
       const pageSize = 10;
-
       while (true) {
         // Fetch a batch of photos
         final photos = await mainAlbum.getAssetListRange(start: start, end: start + pageSize);
@@ -113,8 +111,9 @@ class AlbumState extends State<Albums> {
         final uploadTasks = photos.map((photo) async {
           final file = await photo.file;
           if (file != null) {
+            // Add the file to the list to display
             setState(() {
-              photoUrls.add(file); // Add the file to the list to display
+              photoUrls.add(file); 
             });
           }
         }).toList();
@@ -123,20 +122,17 @@ class AlbumState extends State<Albums> {
         await Future.wait(uploadTasks);
         start += pageSize;
       }
-
-      setState(() {
-        isLoading = false;
-      });
     } else {
       print("Main album not found");
     }
   }
 
 
-
+  // Create default albums using the server's API
   Future<void> createDefaultAlbums() async {
     try {
-      final uri = Uri.parse('http://192.168.1.15:5000/api/photos/create-default-face-albums');
+      final uri = Uri.parse('http://192.168.1.32:5000/api/photos/create-default-face-albums');
+      // Get user ID
       String? user = FirebaseAuth.instance.currentUser?.uid;
       var response = await http.post(
         uri,
@@ -147,17 +143,19 @@ class AlbumState extends State<Albums> {
           'user': user ?? '',
         }),
       );
-
+      // Fetch updated albums after creation
       if (response.statusCode == 200) {
         fetchAlbums();
+        // Show success message
         showSnackbar('Default albums created!');
+
       }
     } catch (e, stacktrace) {
       print('Error creating default albums: $e');
       print(stacktrace);
     }
   }
-
+  // Show a snackbar with a message - Default albums created!
   void showSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message),
@@ -169,7 +167,6 @@ class AlbumState extends State<Albums> {
   Widget build(BuildContext context) {
     return BaseScreen(
       child: Scaffold(
-
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
@@ -187,7 +184,9 @@ class AlbumState extends State<Albums> {
             color: Colors.white,
             onPressed: () async {
               try {
+                // Reset user ID on logout
                 await resetUserId();
+                // Stop background service
                 FlutterBackgroundService().invoke("stopService");
                 Navigator.pushAndRemoveUntil(
                   context,
@@ -206,7 +205,9 @@ class AlbumState extends State<Albums> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
+            // create album button
             child: ValueListenableBuilder<bool>(
+              // Listen for button enabled state
               valueListenable: isButtonEnabledNotifier,
               builder: (context, isButtonEnabled, child) {
                 return Column(
@@ -225,7 +226,7 @@ class AlbumState extends State<Albums> {
                                 print(stacktrace);
                               }
                             }
-                          : null,
+                          : null, // Disable button if not enabled
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isButtonEnabled ? Colors.blueAccent : Colors.grey,
                         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
@@ -247,6 +248,7 @@ class AlbumState extends State<Albums> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        // Show checkbox for default albums
                         Checkbox(
                           value: isChecked,
                           onChanged: isButtonEnabled
@@ -298,7 +300,7 @@ class AlbumState extends State<Albums> {
                         albumId: album['albumId'],
                         albumName: album['albumName'],
                         thumbnailUrl: album['thumbnailUrl'],
-                        onAlbumDeleted: fetchAlbums,
+                        onAlbumDeleted: fetchAlbums,// Refresh albums when deleted
                       );
                     },
                   ),

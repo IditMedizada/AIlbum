@@ -10,10 +10,10 @@ class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key, this.child});
 
   @override
-  State<StatefulWidget> createState() => _SplashScreenState();
+  State<StatefulWidget> createState() => SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     Future.delayed(const Duration(seconds: 3), () async {
@@ -28,6 +28,7 @@ class _SplashScreenState extends State<SplashScreen> {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => widget.child!),
+            // removing all previous screens from the navigation stack
             (route) => false,
           );
       }
