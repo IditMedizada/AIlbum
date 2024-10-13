@@ -58,11 +58,11 @@ cd AI-lbum
    ```javascript
    // firebaseConfig.js (server-side)
    const admin = require('firebase-admin');
-   const serviceAccount = require('./path/to/serviceAccountKey.json');
+   const serviceAccount = require('./ailbum-firebase-adminsdk-dg0c0-43b2fbeb0a.json');
    
    admin.initializeApp({
      credential: admin.credential.cert(serviceAccount),
-     storageBucket: 'your-project-id.appspot.com',
+     storageBucket: 'gs://ailbum.appspot.com',
    });
    
    const bucket = admin.storage().bucket();
