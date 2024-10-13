@@ -1,6 +1,9 @@
 const { bucket } = require('../firebaseConfig');
 const path = require('path');
 const expectedEncodingLength = 128;
+
+//This class provides methods to handle saving,
+// updating, and retrieving face encodings and associating them with photos.
 class FaceEncodingModel {
     // Save a new face encoding or update an existing one
     static async saveFaceEncoding(faceId, descriptor, photoPath) {
@@ -18,6 +21,10 @@ class FaceEncodingModel {
         let faceData = { descriptor, photos: [photoPath] };
     
         try {
+            //Checks if the face encoding file for the given faceId already exists.
+            //If it exists, it merges the new photo path with the existing photo paths 
+            //(avoiding duplicates).
+            //If it doesn’t exist, it creates a new encoding with the face descriptor and photo path.
             const [exists] = await bucket.file(encodingFilePath).exists();
             if (exists) {
                 const [content] = await bucket.file(encodingFilePath).download();
@@ -37,7 +44,11 @@ class FaceEncodingModel {
     }
     
 
-    // Add a new photo to an existing face encoding
+    // Purpose: Adds a new photo to an existing face encoding.
+    // Code Flow:
+    // Retrieves the existing face encoding's metadata from Firebase.
+    // Adds the new photo path to the photos array if it doesn't already exist.
+    // Updates the metadata with the new photo path.
     static async addPhotoToFace(faceId, photoPath) {
         console.log("in addPhotoToFace");
     
@@ -64,14 +75,18 @@ class FaceEncodingModel {
                         photos: JSON.stringify(photos)
                     }
                 });
-                console.log("photos for id: ",faceId," are: ", photos);
-                console.log(`Updated face encoding with new photo path: ${photoPath}`);
+                
             }
         } catch (error) {
             console.error(`Error updating face encoding: ${error.message}`);
         }
     }
     
+
+    // Purpose: Fetches all face encodings stored for a specific user.
+    // Code Flow:
+    // Retrieves all face encoding files from the face_encodings folder in the user's directory.
+    // Downloads and parses each encoding file to extract the face descriptors and their corresponding face IDs.
     static async getAllFaceEncodingsForUser(user) {
         const faceEncodingsFolder = `${user}/face_encodings/`;
         console.log(`Fetching face encodings from: ${faceEncodingsFolder}`); // Log the path being used
@@ -96,11 +111,15 @@ class FaceEncodingModel {
     }
     
 
-    // Retrieve all face encodings
+    // Purpose: Retrieves all face encodings for a given photo's path.
+    // Code Flow:
+    // Determines the folder path for face encodings based on the photo path.
+    // Iterates through all face encoding files in the folder.
+    // For each file, it downloads and parses the content, 
+    //validates the descriptor length, and adds it to the faceEncodings array.
     static async getFaceEncodings(photoPath) {
         const baseFolderPathup = photoPath.substring(0, photoPath.lastIndexOf('/'));
         const baseFolderPath = baseFolderPathup.substring(0, baseFolderPathup.lastIndexOf('/')) + '/face_encodings/';
-        console.log("baseFolderPath: ", baseFolderPath);
         const [files] = await bucket.getFiles({ prefix: baseFolderPath });
         const faceEncodings = [];
     

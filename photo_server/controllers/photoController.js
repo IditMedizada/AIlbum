@@ -3,14 +3,15 @@ const FaceService = require('../services/faceService');
 const faceapi = require('face-api.js');
 const { bucket } = require('../firebaseConfig');  // Correctly importing bucket from firebaseConfig
 const { Canvas, Image, ImageData } = require('canvas');
-const canvas = require('canvas');
+const canvas = require('canvas');  // Used for loading and processing images.
 
 // Patch the environment with node-canvas
+//This integrates node-canvas with face-api.js for processing images server-side.
 faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 
 // Map to track user request queues and locks
-const userLocks = new Map();  // Locks to prevent concurrent requests
-const userQueues = new Map();  // Queue to store requests for each user
+const userLocks = new Map();  // Locks to prevent concurrent requests -Tracks whether a request is already being processed for a user.
+const userQueues = new Map();  // Queue to store requests for each user - Manages queued requests for users when a lock is active (multiple requests for the same user).
 
 class PhotoController {
     static async processUploadedPhotos(req, res) {
@@ -44,10 +45,9 @@ class PhotoController {
 // Process photos for the user
 async function processUserPhotos(req, res, user) {
     const userFolderPath = `${user}/user_photos`;
-    console.log("User folder path:", userFolderPath);
 
     try {
-        console.log("Attempting to retrieve files from bucket...");
+       //Retrieves all user photos stored in the user's folder.
         const [files] = await bucket.getFiles({ prefix: userFolderPath });
 
         if (!files || files.length === 0) {
@@ -83,8 +83,11 @@ async function processUserPhotos(req, res, user) {
             await FirebaseService.updatePhotoMetadata(filePath, faceIds);
             console.log(`Metadata updated for file: ${filePath}`);
         }
-
+        await updateProcessedFile(user, true); // Update processed.json to true
+        console.log(`User metadata updated for ${user}: { processed: true }`);
+        console.log("Photos processed successfully for user : ",user);
         res.status(200).json({ message: 'Photos processed successfully.' });
+        
     } catch (error) {
         console.error("Error during photo processing:", error);
         res.status(500).json({ message: 'An error occurred while processing photos.', error: error.message });
@@ -107,6 +110,21 @@ function processNextUserRequest(user) {
 
     const nextRequest = userQueues.get(user).shift();  // Get the next request in the queue
     PhotoController.processUploadedPhotos(nextRequest.req, nextRequest.res);
+}
+
+async function updateProcessedFile(userId, isProcessed) {
+    const userFolderPath = `${userId}/`;  // User folder path
+    const processedFile = bucket.file(`${userFolderPath}processed.json`);
+
+    // Update the status in processed.json
+    const status = JSON.stringify({ processed: isProcessed });
+    await processedFile.save(status, {
+        metadata: {
+            contentType: 'application/json',
+        },
+    });
+
+    console.log(`Processed file updated for ${userId} with status: ${status}`);
 }
 
 module.exports = PhotoController;
