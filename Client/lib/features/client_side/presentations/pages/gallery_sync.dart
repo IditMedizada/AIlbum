@@ -14,7 +14,7 @@ class GallerySync{
   // A list to store the selected photo files
   List<File> photoUrls = [];
   // Firebase Storage reference
-  final storage = FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
+  final storage = FirebaseStorage.instanceFor(bucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET'));
 
   // Method to synchronize all photos from a specific album with Firebase Storage - will registaring in the first time
   Future<void> syncPhotos(String user) async {
@@ -42,7 +42,8 @@ class GallerySync{
       }
 
       // Notify the server after all photos are uploaded
-      final uri = Uri.parse('http://192.168.1.32:5000/api/photos/process-photos');
+      const serverBaseUrl = String.fromEnvironment('SERVER_BASE_URL', defaultValue: 'http://localhost:5000');
+      final uri = Uri.parse('$serverBaseUrl/api/photos/process-photos');
       final response = await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'user': user}));
       if (response.statusCode >= 200 && response.statusCode < 300) {
         print("All photos uploaded and server notified - gallery sync.");
@@ -81,7 +82,8 @@ class GallerySync{
   
       // Notify the server after all photos are uploaded
       print("send night mode to serverrrrr");
-      final uri = Uri.parse('http://192.168.1.32:5000/api/photos/process-photos');
+      const serverBaseUrl = String.fromEnvironment('SERVER_BASE_URL', defaultValue: 'http://localhost:5000');
+      final uri = Uri.parse('$serverBaseUrl/api/photos/process-photos');
       final response = await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'user': user}));
       if (response.statusCode >= 200 && response.statusCode < 300) {
         print('Server request succeeded.');
