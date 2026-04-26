@@ -62,7 +62,8 @@ class CreateAlbumState extends State<CreateAlbum> {
 
     // Adjust end date to include the entire day
     final adjustedEndDate = endDate?.add(const Duration(hours: 23, minutes: 59, seconds: 59));
-    final uri = Uri.parse('http://192.168.1.32:5000/api/photos/create-album');
+    const serverBaseUrl = String.fromEnvironment('SERVER_BASE_URL', defaultValue: 'http://localhost:5000');
+    final uri = Uri.parse('$serverBaseUrl/api/photos/create-album');
     // Get the current user's ID
     String? user = FirebaseAuth.instance.currentUser?.uid;
 
