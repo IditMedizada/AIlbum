@@ -25,7 +25,7 @@ class Albums extends StatefulWidget {
 
 class AlbumState extends State<Albums> {
   // Firebase Storage instance to access albums and photos
-  final FirebaseStorage storage = FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
+  final FirebaseStorage storage = FirebaseStorage.instanceFor(bucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET'));
   // List to hold album data - Id, Name, FirstImage
   List<Map<String, dynamic>> albumData = [];
   // List to hold photos fetched from the device
@@ -131,7 +131,8 @@ class AlbumState extends State<Albums> {
   // Create default albums using the server's API
   Future<void> createDefaultAlbums() async {
     try {
-      final uri = Uri.parse('http://192.168.1.32:5000/api/photos/create-default-face-albums');
+      const serverBaseUrl = String.fromEnvironment('SERVER_BASE_URL', defaultValue: 'http://localhost:5000');
+      final uri = Uri.parse('$serverBaseUrl/api/photos/create-default-face-albums');
       // Get user ID
       String? user = FirebaseAuth.instance.currentUser?.uid;
       var response = await http.post(
