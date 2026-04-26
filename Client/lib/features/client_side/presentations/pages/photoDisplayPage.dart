@@ -22,7 +22,7 @@ class PhotoDisplayPage extends StatefulWidget {
 class PhotoDisplayPageState extends State<PhotoDisplayPage> {
   List<String> photoUrls = [];
   int isDownloading = 0;
-  final storage = FirebaseStorage.instanceFor(bucket: "gs://ailbum.appspot.com");
+  final storage = FirebaseStorage.instanceFor(bucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET'));
 
   @override
   void initState() {
