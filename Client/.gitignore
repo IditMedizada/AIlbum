@@ -41,3 +41,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase config files (contain API keys - add locally, never commit)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
