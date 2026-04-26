@@ -16,10 +16,10 @@ Future<void> main() async {
   // Initialize Firebase
   await Firebase.initializeApp(
     options: const FirebaseOptions(
-      apiKey: "AIzaSyCRoY8tAawlcPC9GAZls4kturQQm23CVD0",
-      appId: "1:808160337385:web:72decfeac9489d7bd97f78",
-      messagingSenderId: "808160337385",
-      projectId: "ailbum",
+      apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
+      appId: String.fromEnvironment('FIREBASE_APP_ID'),
+      messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
+      projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
     ),
   );
 
